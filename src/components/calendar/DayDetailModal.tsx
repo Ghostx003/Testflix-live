@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Activity, ListChecks } from 'lucide-react';
-import { cn } from '../../utils/cn';
+
 
 interface DayDetailModalProps {
   date: Date;

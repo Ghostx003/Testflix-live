@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
-import type { PracticeSession, Question } from '../services/db';
+import type { PracticeSession } from '../services/db';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, PlusCircle, Tag as TagIcon, Book, Activity, Star, Trash2, History, Layers, ClipboardList } from 'lucide-react';
+import { Play, Tag as TagIcon, Book, Activity, Star, Trash2, History, Layers, ClipboardList } from 'lucide-react';
 
 export const Practice: React.FC = () => {
   const navigate = useNavigate();

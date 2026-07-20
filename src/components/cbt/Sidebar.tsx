@@ -13,7 +13,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const answered = responses.filter(r => r.status === 'answered' || r.status === 'answered_review').length;
   const review = responses.filter(r => r.status === 'review' || r.status === 'answered_review').length;
   const notVisited = responses.filter(r => r.status === 'not_visited').length;
-  const notAnswered = responses.filter(r => r.status === 'not_answered').length;
+
 
   const metrics = [
     { label: 'ANSWERED', value: answered },

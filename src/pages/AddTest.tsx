@@ -16,7 +16,7 @@ export const AddTest: React.FC = () => {
   // Form State
   const [coachingId, setCoachingId] = useState<number | ''>('');
   const [testTypeId, setTestTypeId] = useState<number | ''>('');
-  const [subjectId, setSubjectId] = useState<number | ''>('');
+  const [subjectId, setSubjectId] = useState<number | '' | 'none'>('');
   const [newSubject, setNewSubject] = useState('');
   
   const [questionsCount, setQuestionsCount] = useState<number | ''>('');
@@ -62,7 +62,7 @@ export const AddTest: React.FC = () => {
   const handleCreateSubject = async () => {
     if (newSubject.trim()) {
       const id = await db.subjects.add({ name: newSubject.trim() });
-      setSubjectId(id);
+      setSubjectId(id as number);
       setNewSubject('');
     }
   };
@@ -70,7 +70,7 @@ export const AddTest: React.FC = () => {
   const handleGenerateTest = async () => {
     if (coachingId && testTypeId && questionsCount && maxMarks && marksObtained !== '') {
       // 1. Create Test Record
-      const testId = await db.tests.add({
+      const testId = (await db.tests.add({
         coachingId: Number(coachingId),
         testTypeId: Number(testTypeId),
         subjectId: subjectId && subjectId !== 'none' ? Number(subjectId) : undefined,
@@ -80,7 +80,7 @@ export const AddTest: React.FC = () => {
         timeTaken: timeTaken.trim() || undefined,
         link: link.trim() || undefined,
         createdAt: new Date(testDate).getTime()
-      });
+      })) as number;
 
       // 2. Generate Question Records
       const defaultStatus = await db.statuses.where('name').equals('Left Out').first();

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Subject } from '../services/db';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { Trash2, Plus, X, Book, Building2, Tags, ListChecks, CheckCircle2, SlidersHorizontal, Settings as SettingsIcon, ChevronRight, ShieldAlert } from 'lucide-react';
+import { Trash2, Plus, X, Book, Building2, Tags, ListChecks, CheckCircle2, SlidersHorizontal } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 const ListItem = ({ 
@@ -26,7 +26,7 @@ const ListItem = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.name);
   const [showTrash, setShowTrash] = useState(false);
-  const hoverTimeout = React.useRef<NodeJS.Timeout>();
+  const hoverTimeout = React.useRef<any>(null);
 
   const handleMouseEnter = () => {
     hoverTimeout.current = setTimeout(() => setShowTrash(true), 4000);
@@ -118,7 +118,7 @@ const ListItem = ({
 };
 
 const SettingsSection = ({ 
-  title, items, onAdd, onDelete, onEdit, validateDelete, placeholder, onClickItem, renderExtras, icon: Icon, headerAction 
+  title, items, onAdd, onDelete, onEdit, validateDelete, placeholder, onClickItem, renderExtras, icon: Icon
 }: { 
   title: string; 
   items: any[]; 
@@ -526,7 +526,7 @@ export const Settings: React.FC = () => {
                 <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-2 -mr-2">
                   <ul className="space-y-3 pb-4">
                     <AnimatePresence>
-                      {subjectTopics.map((topic, i) => (
+                      {subjectTopics.map((topic) => (
                         <ListItem 
                           key={topic.id} 
                           item={topic} 

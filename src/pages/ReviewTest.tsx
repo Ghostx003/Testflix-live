@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import { Button } from '../components/ui/Button';
@@ -309,7 +309,7 @@ export const ReviewTest: React.FC = () => {
 
   const handleAddNewGlobalTag = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && newTagInput.trim() && selectedQuestion) {
-      const tagId = await db.tags.add({ name: newTagInput.trim() });
+      const tagId = (await db.tags.add({ name: newTagInput.trim() })) as number;
       await handleTagToggle(selectedQuestion.id!, tagId);
       setNewTagInput('');
     }
@@ -317,7 +317,7 @@ export const ReviewTest: React.FC = () => {
 
   const handleAddNewTopic = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && newTopicInput.trim() && selectedQuestion && effectiveSubjectId) {
-      const topicId = await db.topics.add({ name: newTopicInput.trim(), subjectId: effectiveSubjectId });
+      const topicId = (await db.topics.add({ name: newTopicInput.trim(), subjectId: effectiveSubjectId })) as number;
       await handleTopicToggle(selectedQuestion.id!, topicId);
       setNewTopicInput('');
     }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Question } from '../services/db';
-import { Bookmark, ArrowLeft, Star, ImageIcon, Clock, CheckSquare, HelpCircle, Eye, EyeOff, Search, X, Menu } from 'lucide-react';
+import { Bookmark, ArrowLeft, Star, CheckSquare, HelpCircle, Eye, EyeOff, Search, X, Menu } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 // Reuse ImagePreview but read-only
@@ -451,7 +451,7 @@ export const Bookmarks: React.FC = () => {
                   )}
                 >
               {selectedQuestions.map((q, index) => {
-                const test = q.testId ? testMap.get(q.testId) : undefined;
+
                 const topicName = q.topicIds?.[0] ? topicMap.get(q.topicIds[0]) : undefined;
                 
                 const isActive = activeQuestion?.id === q.id;
@@ -586,7 +586,7 @@ export const Bookmarks: React.FC = () => {
 
         // Statuses
         if (q.statusIds?.some(statusId => {
-          const statusName = statusMap.get(statusId)?.toLowerCase() || '';
+          const statusName = statusMap.get(statusId)?.name?.toLowerCase() || '';
           return statusName === query || statusName.startsWith(query + ' ') || statusName.startsWith(query);
         })) return true;
 

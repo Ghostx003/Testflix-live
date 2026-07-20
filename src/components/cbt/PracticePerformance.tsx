@@ -33,7 +33,7 @@ export const PracticePerformance: React.FC<Props> = ({ session, questions, onBac
 
   const correctCount = session.responses.filter(r => r.isCorrect).length;
   const incorrectCount = session.responses.filter(r => r.status.includes('answered') && !r.isCorrect).length;
-  const unattemptedCount = session.responses.filter(r => !r.status.includes('answered')).length;
+
   const accuracy = correctCount + incorrectCount > 0 
     ? Math.round((correctCount / (correctCount + incorrectCount)) * 100) 
     : 0;

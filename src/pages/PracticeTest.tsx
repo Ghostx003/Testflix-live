@@ -82,7 +82,7 @@ export const PracticeTest: React.FC = () => {
 
     if (currentQuestion?.optionsType === 'NAT') {
       isCorrect = currentQuestion.numericalAnswer !== undefined && currentQuestion.numericalAnswer === localResponse.numericalAnswer;
-    } else if (currentQuestion?.optionsType === 'MSQ' || qOptions.length > 1) {
+    } else if (qOptions.length > 1) {
       if (qOptions.length > 0 && rOptions.length === qOptions.length) {
         isCorrect = qOptions.every(opt => rOptions.includes(opt));
       }
@@ -205,7 +205,7 @@ export const PracticeTest: React.FC = () => {
           <QuestionMetaGrid 
             subjectName={session.name}
             questionNumberText={`Q.${activeIndex + 1} of ${totalQuestions}`}
-            typeText={`${currentQuestion?.optionsType === 'NAT' ? 'NAT' : (currentQuestion?.optionsType === 'MSQ' || (currentQuestion?.selectedOptions && currentQuestion.selectedOptions.length > 1) ? 'MSQ' : 'MCQ')} | +1 / ${currentQuestion?.optionsType === 'NAT' ? '0' : (session.allowNegativeMarking ? '-0.33' : '0')}`}
+            typeText={`${currentQuestion?.optionsType === 'NAT' ? 'NAT' : ((currentQuestion?.selectedOptions && currentQuestion.selectedOptions.length > 1) ? 'MSQ' : 'MCQ')} | +1 / ${currentQuestion?.optionsType === 'NAT' ? '0' : (session.allowNegativeMarking ? '-0.33' : '0')}`}
             statusText={formatStatus(localResponse?.status || 'not_visited')}
           />
           <QuestionView 

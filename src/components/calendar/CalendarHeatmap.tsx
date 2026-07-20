@@ -29,7 +29,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const weeks = useMemo(() => {
-    const firstDayOfMonth = new Date(year, month, 1);
+
     const lastDayOfMonth = new Date(year, month + 1, 0);
     
     const testsByDate = new Map<string, any[]>();

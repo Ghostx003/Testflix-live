@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calculator } from 'lucide-react';
+
 
 export interface HeaderProps {
   initialTimeElapsed: number;
@@ -10,7 +10,7 @@ export interface HeaderProps {
   title: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ initialTimeElapsed, timeLimit, onTimeUpdateRef, onSubmit, onBack, title }) => {
+export const Header: React.FC<HeaderProps> = ({ initialTimeElapsed, timeLimit, onTimeUpdateRef, onSubmit, onBack }) => {
   const [time, setTime] = useState(initialTimeElapsed);
 
   useEffect(() => {
