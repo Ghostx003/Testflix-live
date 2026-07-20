@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { db } from '../services/db';
+import { importDatabase } from '../services/backup';
 import { Upload, X } from 'lucide-react';
 
 export const SetupWizard: React.FC = () => {
   const [userProfile, setUserProfile] = useLocalStorage('userProfile', { name: '', isFirstTime: true, hasCompletedSetup: false });
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [step, setStep] = useState<0 | 1 | 2>(0);
   
@@ -69,6 +71,28 @@ export const SetupWizard: React.FC = () => {
     navigate('/app');
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        await importDatabase(file);
+        setUserProfile({ ...userProfile, isFirstTime: false, hasCompletedSetup: true });
+        alert("Database imported successfully! Refreshing app...");
+        window.location.reload();
+      } catch (error) {
+        alert("Failed to import database");
+      }
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+
   const renderStep0 = () => (
     <motion.div 
       key="step0"
@@ -84,11 +108,18 @@ export const SetupWizard: React.FC = () => {
           <span className="text-sm font-normal opacity-80">Start fresh setup</span>
         </Button>
         
-        <Button size="lg" variant="outline" className="h-32 flex flex-col gap-2" onClick={() => alert('Restore not implemented yet')}>
+        <Button size="lg" variant="outline" className="h-32 flex flex-col gap-2" onClick={handleImportClick}>
           <Upload className="w-6 h-6" />
           <span className="text-lg">No, restore backup</span>
         </Button>
       </div>
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept=".json" 
+        className="hidden" 
+      />
     </motion.div>
   );
 
