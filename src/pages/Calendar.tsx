@@ -74,18 +74,32 @@ export const Calendar: React.FC = () => {
   const coachings = useLiveQuery(() => db.coachings.toArray()) ?? [];
   const subjects = useLiveQuery(() => db.subjects.toArray()) ?? [];
   const testTypes = useLiveQuery(() => db.testTypes.toArray()) ?? [];
+  const topics = useLiveQuery(() => db.topics.toArray()) ?? [];
 
   const cMap = useMemo(() => new Map(coachings.map(c => [c.id!, c.name])), [coachings]);
   const sMap = useMemo(() => new Map(subjects.map(s => [s.id!, s.name])), [subjects]);
   const tMap = useMemo(() => new Map(testTypes.map(t => [t.id!, t.name])), [testTypes]);
+  const topMap = useMemo(() => new Map(topics.map(t => [t.id!, t.name])), [topics]);
 
-  const resolve = (t: Test) => ({
-    coaching: cMap.get(t.coachingId) ?? 'Unknown',
-    subject: t.subjectId ? (sMap.get(t.subjectId) ?? '') : '',
-    testType: tMap.get(t.testTypeId) ?? 'Unknown',
-    pct: t.maxMarks > 0 ? Math.round((t.marksObtained / t.maxMarks) * 100) : 0,
-    dur: parseDuration(t.timeTaken),
-  });
+  const resolve = (t: Test) => {
+    const coachingName = cMap.get(t.coachingId) ?? 'Unknown';
+    const subjectName = t.subjectId ? (sMap.get(t.subjectId) ?? '') : '';
+    const testTypeName = tMap.get(t.testTypeId) ?? 'Unknown';
+    const topicName = t.topicId ? (topMap.get(t.topicId) ?? '') : '';
+    
+    // Determine the name of the test
+    const testName = topicName || subjectName || 'Multiple Subjects';
+
+    return {
+      coaching: coachingName,
+      subject: subjectName,
+      testType: testTypeName,
+      topic: topicName,
+      name: testName,
+      pct: t.maxMarks > 0 ? Math.round((t.marksObtained / t.maxMarks) * 100) : 0,
+      dur: parseDuration(t.timeTaken),
+    };
+  };
 
   // Group tests by date
   const byDate = useMemo(() => {
@@ -129,9 +143,14 @@ export const Calendar: React.FC = () => {
     return { resolved: r, avg: tMax > 0 ? Math.round((tObt / tMax) * 100) : 0 };
   }, [hovered, cMap, sMap, tMap]);
 
+  const historyTests = useMemo(() => {
+    return [...allTests].sort((a, b) => b.createdAt - a.createdAt);
+  }, [allTests]);
+
   return (
-    <div className="w-full h-full flex items-center justify-center px-4 py-6">
-      <div className="w-full max-w-3xl">
+    <div className="w-full h-full flex flex-col lg:flex-row items-start justify-center px-4 py-6 gap-6 max-w-[90rem] mx-auto">
+      {/* ── Calendar (Left Side) ────────────────────────────────────────── */}
+      <div className="w-full lg:w-2/3 max-w-3xl lg:max-w-none mx-auto lg:mx-0">
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -323,6 +342,89 @@ export const Calendar: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── History (Right Side) ────────────────────────────────────────── */}
+      <div className="w-full lg:w-1/3 max-w-3xl lg:max-w-none mx-auto lg:mx-0">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="bg-[#0f1623] rounded-3xl border border-[#1e293b] shadow-[0_0_80px_rgba(0,0,0,0.4)] p-6 sm:p-8 flex flex-col h-[600px] lg:h-[calc(100vh-8rem)] min-h-[500px]"
+        >
+          <div className="flex items-center gap-3 mb-6 shrink-0">
+            <Clock className="w-6 h-6 text-emerald-400" />
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Test History</h2>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-[#1e293b] scrollbar-track-transparent">
+            {historyTests.length === 0 ? (
+              <p className="text-center text-[#64748b] py-12">No test history available.</p>
+            ) : (
+              historyTests.map((t, i) => {
+                const r = resolve(t);
+                const dateObj = new Date(t.createdAt);
+                const dateStr = dateObj.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                });
+                const timeStr = dateObj.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                });
+
+                return (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.2 }}
+                    onClick={() => navigate(`/app/test-dashboard?testId=${t.id}`)}
+                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                  >
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {/* Coaching Logo/Initials */}
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-black text-indigo-300">
+                          {r.coaching.substring(0, 3).toUpperCase()}
+                        </span>
+                      </div>
+                      
+                      {/* Details */}
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
+                          {r.name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-[#94a3b8]">
+                            {r.testType}
+                          </span>
+                          {r.subject && r.subject !== r.name && (
+                            <span className="text-[10px] text-[#64748b] truncate">
+                              • {r.subject}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                        <Clock className="w-3.5 h-3.5" />
+                        {fmtMins(r.dur)}
+                      </div>
+                      <div className="text-[10px] text-[#64748b] text-right">
+                        <div>{dateStr}</div>
+                        <div>at {timeStr}</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };

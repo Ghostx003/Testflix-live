@@ -56,7 +56,9 @@ export interface Test {
   link?: string;
   createdAt: number;
   isImportant?: boolean;
+  tagIds?: number[];
 }
+
 
 export interface Question {
   id?: number;
