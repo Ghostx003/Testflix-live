@@ -1019,6 +1019,7 @@ export const Performance: React.FC = () => {
   const [subjectSortCol, setSubjectSortCol] = useState<string>('attempted');
   const [subjectSortDir, setSubjectSortDir] = useState<'asc' | 'desc'>('desc');
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [subjectViewMode, setSubjectViewMode] = useState<'questions' | 'tests'>('questions');
 
   const [expandedTag, setExpandedTag] = useState<number | null>(null);
   const [viewingQuestions, setViewingQuestions] = useState<Question[] | null>(null);
@@ -1128,7 +1129,8 @@ export const Performance: React.FC = () => {
       const ordered = [...subjectQuestions].sort((a, b) => (testMap.get(a.question.testId)?.createdAt || 0) - (testMap.get(b.question.testId)?.createdAt || 0));
       const split = Math.ceil(ordered.length / 2);
       const improvement = ordered.length >= 4 ? getBreakdown(ordered.slice(split)).accuracy - getBreakdown(ordered.slice(0, split)).accuracy : 0;
-      return { id: subject.id!, name: subject.name, ...stat, weakTopics, strongTopics, difficulty: stat.attempted ? Math.round(100 - stat.accuracy) : 0, improvement };
+      const testCount = subjectTests.length;
+      return { id: subject.id!, name: subject.name, ...stat, weakTopics, strongTopics, difficulty: stat.attempted ? Math.round(100 - stat.accuracy) : 0, improvement, testCount };
     }).filter(item => item.total || item.score);
     const byTopic = topics.map(topic => {
       const qs = questionMetrics.filter(q => q.topicIds.includes(topic.id!));
@@ -1715,8 +1717,12 @@ export const Performance: React.FC = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-surface-500">Subject performance</p>
             <h2 className="mt-1 text-xl font-black text-white">Subject leaderboard</h2>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <label className="text-xs font-bold text-surface-400 uppercase tracking-widest whitespace-nowrap">Sort by:</label>
+          <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+            <div className="flex bg-surface-900 border border-white/10 rounded-lg p-1">
+              <button onClick={() => setSubjectViewMode('questions')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all", subjectViewMode === 'questions' ? 'bg-surface-700 text-white shadow-sm' : 'text-surface-400 hover:text-surface-200')}>Questions</button>
+              <button onClick={() => setSubjectViewMode('tests')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all", subjectViewMode === 'tests' ? 'bg-surface-700 text-white shadow-sm' : 'text-surface-400 hover:text-surface-200')}>Tests</button>
+            </div>
+            <label className="text-xs font-bold text-surface-400 uppercase tracking-widest whitespace-nowrap hidden sm:block">Sort by:</label>
             <select
               className="bg-surface-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-primary-500 w-full sm:w-64 appearance-none shadow-sm cursor-pointer"
               value={['accuracy-desc', 'score-desc', 'averageTime-asc', 'incorrect-asc', 'incorrect-desc'].includes(`${subjectSortCol}-${subjectSortDir}`) ? `${subjectSortCol}-${subjectSortDir}` : ''}
@@ -1746,7 +1752,7 @@ export const Performance: React.FC = () => {
                 <tr>
                   {[
                     { id: 'name', label: 'Subject' },
-                    { id: 'attempted', label: 'Attempted' },
+                    { id: 'attempted', label: subjectViewMode === 'tests' ? 'Tests' : 'Attempted' },
                     { id: 'score', label: 'Score' },
                     { id: 'correct', label: 'Correct' },
                     { id: 'incorrect', label: 'Wrong' },
@@ -1804,7 +1810,7 @@ export const Performance: React.FC = () => {
                         <span className="font-bold text-white">{subject.name}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-2 text-surface-300">{subject.attempted}</td>
+                    <td className="py-3.5 px-2 text-surface-300 font-bold">{subjectViewMode === 'tests' ? `${subject.testCount} Tests` : subject.attempted}</td>
                     <td className="py-3.5 px-2 text-surface-300">{subject.score} / {subject.maxScore} <span className="text-[10px] text-surface-500 ml-1">({round(percent(subject.score, subject.maxScore))}%)</span></td>
                     <td className="py-3.5 px-2 text-emerald-400 font-bold">{subject.correct}</td>
                     <td className="py-3.5 px-2 text-rose-400 font-bold">{subject.incorrect}</td>
