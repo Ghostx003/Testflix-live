@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="bg-slate-800 border border-slate-700 rounded-md p-4 flex-1 flex flex-col">
         <div className="text-xs font-bold text-slate-400 uppercase mb-4">QUESTION PALETTE</div>
         
-        <div className="grid grid-cols-5 gap-2 overflow-y-auto pr-2 flex-[1] min-h-[100px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="grid grid-cols-4 gap-5 overflow-y-auto pr-2 flex-[1] min-h-[100px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full">
           {responses.map((r, i) => {
             let stateClass = "bg-slate-300 text-slate-700 hover:bg-slate-400"; // not_visited
             
@@ -57,13 +57,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               stateClass = "bg-red-500 text-white border-none hover:bg-red-600";
             }
             
-            const activeClass = isActive ? "ring-2 ring-white ring-offset-2 ring-offset-slate-800 shadow-[0_0_12px_rgba(255,255,255,0.7)] z-10 scale-105" : "";
+            const activeClass = isActive ? "border-2 border-white scale-110 z-10" : "border-2 border-transparent";
 
             return (
               <button 
                 key={i} 
                 onClick={() => onNavigate(i)}
-                className={`relative aspect-square rounded-md flex items-center justify-center text-sm font-semibold transition-all duration-200 ${stateClass} ${activeClass}`}
+                className={`relative aspect-square rounded-xl flex items-center justify-center text-sm font-semibold transition-all duration-200 ${stateClass} ${activeClass}`}
               >
                 {i + 1}
                 {r.status === 'answered_review' && (
