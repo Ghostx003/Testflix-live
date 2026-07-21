@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, AlertTriangle, ArrowRight, Award, BarChart3, Brain,
   ChevronDown, ChevronUp, Clock3, Flame, Gauge, Layers3,
-  ShieldCheck, Sparkles, Target, Tags, TrendingDown,
+  ShieldCheck, Target, Tags, TrendingDown,
   TrendingUp, Trophy, Zap, Calendar, X, Archive, EyeOff, ExternalLink
 } from 'lucide-react';
 import { db, type Question } from '../services/db';
@@ -704,56 +704,6 @@ const StickyNav = () => {
 };
 
 
-const RadarChart = ({ data }: { data: any[] }) => {
-  const size = 260;
-  const center = size / 2;
-  const radius = size * 0.35;
-  
-  const getPoint = (val: number, max: number, angle: number) => {
-    const r = max === 0 ? 0 : (val / max) * radius;
-    return {
-      x: center + r * Math.sin(angle),
-      y: center - r * Math.cos(angle)
-    };
-  };
-
-  const angles = data.map((_, i) => (Math.PI * 2 * i) / data.length);
-  const points1 = data.map((d, i) => getPoint(d.val1, d.max, angles[i]));
-  const points2 = data.map((d, i) => getPoint(d.val2, d.max, angles[i]));
-
-  return (
-    <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="overflow-visible drop-shadow-2xl">
-      <defs>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      {[0.25, 0.5, 0.75, 1].map(r => (
-        <circle key={r} cx={center} cy={center} r={radius * r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray={r < 1 ? "2,2" : ""} />
-      ))}
-      {angles.map((angle, i) => {
-         const p = getPoint(data[i].max, data[i].max, angle);
-         const labelP = getPoint(data[i].max * 1.35, data[i].max, angle);
-         return (
-           <g key={i}>
-             <line x1={center} y1={center} x2={p.x} y2={p.y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-             <text x={labelP.x} y={labelP.y} fill="#94a3b8" fontSize="9" fontWeight="bold" textAnchor="middle" dominantBaseline="middle" className="uppercase tracking-widest">{data[i].label}</text>
-             <text x={labelP.x} y={labelP.y + 12} fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" dominantBaseline="middle">{data[i].val1Prefix}{Math.round(data[i].val1 * 10)/10}{data[i].suffix}</text>
-           </g>
-         );
-      })}
-      <polygon points={points2.map(p => `${p.x},${p.y}`).join(' ')} fill="rgba(148, 163, 184, 0.1)" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3,3" />
-      <polygon points={points1.map(p => `${p.x},${p.y}`).join(' ')} fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" strokeWidth="2.5" filter="url(#glow)" />
-      {points1.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="4" fill="#10b981" />)}
-      {points2.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill="#94a3b8" />)}
-    </svg>
-  );
-};
-
 const MeVsMeComparison: React.FC<{
   tests: any[];
   questions: any[];
@@ -761,7 +711,7 @@ const MeVsMeComparison: React.FC<{
   topics: any[];
   testTypes: any[];
   statuses: any[];
-}> = ({ tests, questions, subjects, statuses }) => {
+}> = ({ tests, questions, subjects, topics, testTypes, statuses }) => {
   const [range1Type, setRange1Type] = useState<string>('this-month');
   const [range1Start, setRange1Start] = useState<string>('');
   const [range1End, setRange1End] = useState<string>('');
@@ -769,6 +719,10 @@ const MeVsMeComparison: React.FC<{
   const [range2Type, setRange2Type] = useState<string>('last-month');
   const [range2Start, setRange2Start] = useState<string>('');
   const [range2End, setRange2End] = useState<string>('');
+
+  const [subjFilter, setSubjFilter] = useState<number | ''>('');
+  const [topicFilter, setTopicFilter] = useState<number | ''>('');
+  const [testTypeFilter, setTestTypeFilter] = useState<number | ''>('');
 
   const getDates = (type: string, startStr: string, endStr: string) => {
     const now = new Date();
@@ -798,6 +752,12 @@ const MeVsMeComparison: React.FC<{
       const end = new Date(now.getFullYear(), now.getMonth(), 0).getTime() + 86400000 - 1;
       return { start, end };
     }
+    if (type.startsWith('month:')) {
+      const [, yyyy, mm] = type.split(/[:-]/);
+      const start = new Date(Number(yyyy), Number(mm) - 1, 1).getTime();
+      const end = new Date(Number(yyyy), Number(mm), 0).getTime() + 86400000 - 1;
+      return { start, end };
+    }
     if (type === 'custom' && startStr && endStr) {
       return { start: new Date(startStr).getTime(), end: new Date(endStr).getTime() + 86400000 - 1 };
     }
@@ -809,18 +769,26 @@ const MeVsMeComparison: React.FC<{
   const computeStats = (rType: string, rStart: string, rEnd: string) => {
     const { start, end } = getDates(rType, rStart, rEnd);
     let filteredTests = tests.filter(t => t.createdAt >= start && t.createdAt <= end);
+    if (testTypeFilter !== '') {
+      filteredTests = filteredTests.filter(t => t.testTypeId === testTypeFilter);
+    }
     const testMap = new Map(filteredTests.map(t => [t.id!, t]));
+    
     let filteredQs = questions.filter(q => testMap.has(q.testId));
+    
+    if (subjFilter !== '') {
+      filteredQs = filteredQs.filter(q => (q.subjectId || testMap.get(q.testId)?.subjectId) === subjFilter);
+    }
+    if (topicFilter !== '') {
+      filteredQs = filteredQs.filter(q => q.topicIds?.includes(topicFilter));
+    }
 
     const metrics = filteredQs.map(question => {
       const names = question.statusIds.map((id: number) => statusMap.get(id) || '');
       return {
-        subjectId: question.subjectId || testMap.get(question.testId)?.subjectId,
-        topicIds: question.topicIds || [],
         correct: names.includes('correct'),
         incorrect: names.includes('incorrect'),
         leftOut: names.includes('left out'),
-        testId: question.testId
       };
     });
 
@@ -830,159 +798,204 @@ const MeVsMeComparison: React.FC<{
     const correct = metrics.filter(m => m.correct).length;
     const attempted = total - skipped;
     const accuracy = percent(correct, attempted);
-    const averageTime = attempted ? filteredTests.reduce((sum, t) => sum + (t.timeTaken ? parseMinutes(t.timeTaken) : 0), 0) / attempted : 0;
+    
+    let timeSum = 0;
+    if (attempted > 0) {
+      const testIds = new Set(filteredQs.map(q => q.testId));
+      testIds.forEach(tId => {
+        const t = testMap.get(tId);
+        if (t && t.timeTaken) {
+          timeSum += parseMinutes(t.timeTaken);
+        }
+      });
+    }
+    const averageTime = attempted ? timeSum / attempted : 0;
 
-    // Subject stats
-    const subjStats = new Map<number, { att: number, cor: number }>();
-    metrics.forEach(m => {
-      if (!m.subjectId || m.leftOut) return;
-      const s = subjStats.get(m.subjectId) || { att: 0, cor: 0 };
-      s.att++;
-      if (m.correct) s.cor++;
-      subjStats.set(m.subjectId, s);
-    });
-
-    return { total, attempted, correct, incorrect, skipped, accuracy, averageTime, subjStats };
+    return { total, attempted, correct, incorrect, skipped, accuracy, averageTime };
   };
 
   const stat1 = computeStats(range1Type, range1Start, range1End);
   const stat2 = computeStats(range2Type, range2Start, range2End);
 
-  // Generate Insights
-  const insights = useMemo(() => {
-    if (!stat1.attempted) return "No questions attempted in the current period. Start practicing to generate insights!";
-    
-    let text = "";
-    const accDiff = stat1.accuracy - stat2.accuracy;
-    
-    if (!stat2.attempted) {
-      text = `You've attempted ${stat1.attempted} questions in this period with an accuracy of ${round(stat1.accuracy)}%. Keep going!`;
-    } else {
-      if (accDiff > 0) {
-        text = `You've seen an impressive +${round(accDiff)}% improvement in overall accuracy! `;
-      } else if (accDiff < 0) {
-        text = `Your overall accuracy has declined by ${round(Math.abs(accDiff))}%. `;
-      } else {
-        text = `Your accuracy has remained steady at ${round(stat1.accuracy)}%. `;
-      }
-
-      const timeDiff = stat1.averageTime - stat2.averageTime;
-      if (timeDiff > 0) {
-        text += `However, your average time per question increased by ${round(timeDiff)} minutes. Focus on speed. `;
-      } else if (timeDiff < 0) {
-        text += `Brilliantly, you are also ${round(Math.abs(timeDiff))} minutes faster per question! `;
-      }
-
-      // Best subject improvement
-      let bestSubj: number | null = null;
-      let bestDiff = -999;
-      stat1.subjStats.forEach((v1, sid) => {
-        const v2 = stat2.subjStats.get(sid);
-        if (v2 && v1.att > 2 && v2.att > 2) {
-          const diff = percent(v1.cor, v1.att) - percent(v2.cor, v2.att);
-          if (diff > bestDiff) { bestDiff = diff; bestSubj = sid; }
-        }
-      });
-
-      if (bestSubj && bestDiff > 0) {
-        const sName = subjects.find(s => s.id === bestSubj)?.name || 'a subject';
-        text += `Your most improved subject is **${sName}** (up ${round(bestDiff)}%). Keep up the great momentum!`;
-      } else if (bestSubj && bestDiff < 0) {
-        const sName = subjects.find(s => s.id === bestSubj)?.name || 'a subject';
-        text += `Pay extra attention to **${sName}**, which saw a drop in accuracy.`;
-      }
+  const monthOptions = useMemo(() => {
+    const opts = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const val = `month:${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+      opts.push({ val, label });
     }
-    return text;
-  }, [stat1, stat2, subjects]);
+    return opts;
+  }, []);
 
   const renderDropdown = (val: string, setVal: (v: string) => void) => (
     <select
       value={val}
       onChange={e => setVal(e.target.value)}
-      className="bg-surface-800 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white focus:outline-none focus:border-primary-500 appearance-none shadow-sm cursor-pointer"
+      className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none shadow-sm cursor-pointer transition-all w-full"
       style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23A1A1AA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem top 50%', backgroundSize: '0.65rem auto', paddingRight: '2.5rem' }}
     >
-      <option value="today">Today</option>
-      <option value="yesterday">Yesterday</option>
-      <option value="this-week">This Week</option>
-      <option value="last-week">Last Week</option>
-      <option value="this-month">This Month</option>
-      <option value="last-month">Last Month</option>
-      <option value="custom">Custom Range</option>
+      <optgroup label="Relative Ranges">
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="this-week">This Week</option>
+        <option value="last-week">Last Week</option>
+        <option value="this-month">This Month</option>
+        <option value="last-month">Last Month</option>
+      </optgroup>
+      <optgroup label="Specific Months">
+        {monthOptions.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+      </optgroup>
+      <option value="custom">Custom Date Range</option>
     </select>
   );
 
-  const maxAtt = Math.max(stat1.attempted, stat2.attempted, 10);
-  const radarData = [
-    { label: 'ACCURACY', val1: stat1.accuracy, val2: stat2.accuracy, max: 100, suffix: '%', val1Prefix: '' },
-    { label: 'VOLUME', val1: stat1.attempted, val2: stat2.attempted, max: maxAtt, suffix: '', val1Prefix: '' },
-    { label: 'PRECISION', val1: stat1.attempted ? percent(stat1.correct, stat1.correct + stat1.incorrect) : 0, val2: stat2.attempted ? percent(stat2.correct, stat2.correct + stat2.incorrect) : 0, max: 100, suffix: '%', val1Prefix: '' },
-    { label: 'SPEED', val1: Math.max(0, 5 - stat1.averageTime), val2: Math.max(0, 5 - stat2.averageTime), max: 5, suffix: 'm', val1Prefix: '-' } // inverted so higher is better
-  ];
+  const getDiffNode = (val1: number, val2: number, invertGood = false, isPercentage = false) => {
+    const diff = val1 - val2;
+    if (val2 === 0 && val1 === 0) return <span className="text-surface-500 text-xs font-black px-2 py-1 bg-surface-800/50 rounded-lg border border-white/5">FLAT</span>;
+    if (val2 === 0) return <span className="text-primary-400 text-xs font-black px-2 py-1 bg-primary-500/10 rounded-lg border border-primary-500/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">NEW</span>;
+    
+    const change = isPercentage ? diff : (diff / val2 * 100);
+    const absChange = Math.abs(change);
+    const isPositive = diff > 0;
+    
+    let isGood = isPositive;
+    if (invertGood) isGood = !isGood;
+    if (diff === 0) return <span className="text-surface-500 text-xs font-black px-2 py-1 bg-surface-800/50 rounded-lg border border-white/5">FLAT</span>;
 
-  return (
-    <section id="me-vs-me" className="mt-6 glass-card rounded-3xl p-5 sm:p-8 border border-white/8 relative overflow-hidden scroll-mt-24">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-500 opacity-50"></div>
-      
-      <div className="flex flex-col md:flex-row justify-between md:items-end gap-6 mb-8">
-        <div>
-          <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
-            <Sparkles className="w-5 h-5" /> INSIGHT ENGINE
+    return (
+      <div className={cn("flex items-center gap-1 text-xs font-black px-2 py-1 rounded-lg border", 
+        isGood ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]" : "text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
+      )}>
+        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+        {isPositive ? '+' : '-'}{round(absChange)}{isPercentage ? '%' : '%'}
+      </div>
+    );
+  };
+
+  const renderStatCard = (title: string, val1: number, val2: number, suffix = '', invertGood = false, isPercentage = false) => {
+    const max = Math.max(val1, val2);
+    const p1 = max === 0 ? 0 : (val1 / max) * 100;
+    const p2 = max === 0 ? 0 : (val2 / max) * 100;
+
+    return (
+      <div className="bg-gradient-to-br from-surface-900/60 to-surface-950/60 backdrop-blur-xl border border-white/5 rounded-[1.5rem] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] group hover:border-white/10 transition-colors">
+        <div className="flex justify-between items-center mb-6">
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-surface-400 group-hover:text-white transition-colors">{title}</h4>
+          {getDiffNode(val1, val2, invertGood, isPercentage)}
+        </div>
+        
+        <div className="flex items-end justify-between gap-6">
+          {/* Period 2 (Comparison) */}
+          <div className="flex-1 space-y-2.5 opacity-60 group-hover:opacity-100 transition-opacity">
+            <div className="text-2xl font-black text-white">{round(val2)}{suffix}</div>
+            <div className="h-1.5 w-full bg-surface-800 rounded-full overflow-hidden">
+              <div className="h-full bg-surface-500 rounded-full transition-all duration-1000" style={{ width: `${p2}%` }} />
+            </div>
+            <div className="text-[9px] uppercase font-bold text-surface-500 tracking-wider">Comparison (P2)</div>
           </div>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-black text-white tracking-tight">ME VS ME</h2>
-          <p className="mt-2 text-surface-400">Your AI-generated performance comparison report.</p>
+
+          {/* Vertical Divider */}
+          <div className="w-[2px] h-12 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+
+          {/* Period 1 (Current) */}
+          <div className="flex-1 space-y-2.5">
+            <div className="text-3xl font-black text-emerald-400 drop-shadow-md">{round(val1)}{suffix}</div>
+            <div className="h-2 w-full bg-surface-800 rounded-full overflow-hidden shadow-inner">
+              <div className="h-full bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-1000" style={{ width: `${p1}%` }} />
+            </div>
+            <div className="text-[9px] uppercase font-bold text-emerald-500/70 tracking-wider">Selected (P1)</div>
+          </div>
         </div>
       </div>
+    );
+  };
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-8 mb-10 items-stretch">
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-5 rounded-2xl bg-surface-800/40 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.05)] space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-              <h3 className="text-xs uppercase tracking-widest font-bold text-emerald-400">Current Period</h3>
-              <div className="flex flex-col gap-3 relative z-10">
-                {renderDropdown(range1Type, setRange1Type)}
-                {range1Type === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="date" value={range1Start} onChange={e => setRange1Start(e.target.value)} className="bg-surface-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white" style={{colorScheme:'dark'}} />
-                    <input type="date" value={range1End} onChange={e => setRange1End(e.target.value)} className="bg-surface-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white" style={{colorScheme:'dark'}} />
-                  </div>
-                )}
-              </div>
-            </div>
+  return (
+    <section id="me-vs-me" className="mt-12 relative overflow-hidden scroll-mt-24 pb-20">
+      {/* Decorative Header */}
+      <div className="flex flex-col gap-2 mb-6">
+        <div className="flex items-center gap-2 text-indigo-400 text-xs font-black uppercase tracking-widest">
+          <Activity className="w-4 h-4" /> Performance Analytics
+        </div>
+        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">ME <span className="text-surface-600">VS</span> ME</h2>
+        <p className="text-surface-400 text-sm md:text-base font-medium">Hyper-analyze your progress across custom timeframes.</p>
+      </div>
 
-            <div className="p-5 rounded-2xl bg-surface-800/40 border border-white/5 space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-surface-600"></div>
-              <h3 className="text-xs uppercase tracking-widest font-bold text-surface-400">Comparison Period</h3>
-              <div className="flex flex-col gap-3 relative z-10">
-                {renderDropdown(range2Type, setRange2Type)}
-                {range2Type === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="date" value={range2Start} onChange={e => setRange2Start(e.target.value)} className="bg-surface-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white" style={{colorScheme:'dark'}} />
-                    <input type="date" value={range2End} onChange={e => setRange2End(e.target.value)} className="bg-surface-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white" style={{colorScheme:'dark'}} />
-                  </div>
-                )}
-              </div>
+      {/* Global Filters */}
+      <div className="bg-gradient-to-br from-surface-900/60 to-surface-950/60 backdrop-blur-xl p-5 rounded-[1.5rem] border border-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.3)] mb-6 flex flex-wrap gap-4 items-center group hover:border-white/10 transition-colors">
+        <div className="flex items-center gap-2 text-[10px] font-black text-surface-500 uppercase tracking-widest mr-2">
+          <Layers3 className="w-3.5 h-3.5" /> Filters
+        </div>
+        
+        <select 
+          className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-surface-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 hover:border-white/20 transition-all cursor-pointer shadow-inner"
+          value={subjFilter} onChange={e => { setSubjFilter(e.target.value ? Number(e.target.value) : ''); setTopicFilter(''); }}
+        >
+          <option value="">All Subjects</option>
+          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+
+        {subjFilter !== '' && (
+          <select 
+            className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-surface-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 hover:border-white/20 transition-all cursor-pointer shadow-inner max-w-[200px]"
+            value={topicFilter} onChange={e => setTopicFilter(e.target.value ? Number(e.target.value) : '')}
+          >
+            <option value="">All Topics</option>
+            {topics.filter(t => t.subjectId === subjFilter).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        )}
+
+        <select 
+          className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-surface-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 hover:border-white/20 transition-all cursor-pointer shadow-inner"
+          value={testTypeFilter} onChange={e => setTestTypeFilter(e.target.value ? Number(e.target.value) : '')}
+        >
+          <option value="">All Test Types</option>
+          {testTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
+        
+        {/* Period Selectors */}
+        <div className="flex flex-col gap-4">
+          <div className="bg-gradient-to-br from-emerald-500/5 to-surface-900/60 backdrop-blur-xl border border-emerald-500/20 rounded-[1.5rem] p-5 shadow-lg relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
+            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+            <h3 className="text-[10px] uppercase tracking-widest font-black text-emerald-400 mb-4 flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> Selected Period (P1)</h3>
+            <div className="flex flex-col gap-3">
+              {renderDropdown(range1Type, setRange1Type)}
+              {range1Type === 'custom' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" value={range1Start} onChange={e => setRange1Start(e.target.value)} className="bg-surface-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-500 shadow-inner" style={{colorScheme:'dark'}} />
+                  <input type="date" value={range1End} onChange={e => setRange1End(e.target.value)} className="bg-surface-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:ring-2 focus:ring-emerald-500 shadow-inner" style={{colorScheme:'dark'}} />
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/20 shadow-inner flex-1">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-300 mb-3 flex items-center gap-2"><Brain className="w-4 h-4"/> Coach's Summary</h3>
-            <p className="text-white font-medium leading-relaxed text-sm sm:text-base">
-              {insights.split('**').map((part, i) => i % 2 === 1 ? <span key={i} className="font-black text-emerald-400">{part}</span> : part)}
-            </p>
+          <div className="bg-gradient-to-br from-surface-800/30 to-surface-900/60 backdrop-blur-xl border border-white/5 rounded-[1.5rem] p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors">
+            <div className="absolute top-0 left-0 w-1 h-full bg-surface-500"></div>
+            <h3 className="text-[10px] uppercase tracking-widest font-black text-surface-400 mb-4 flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> Comparison Period (P2)</h3>
+            <div className="flex flex-col gap-3">
+              {renderDropdown(range2Type, setRange2Type)}
+              {range2Type === 'custom' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" value={range2Start} onChange={e => setRange2Start(e.target.value)} className="bg-surface-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:ring-2 focus:ring-surface-500 shadow-inner" style={{colorScheme:'dark'}} />
+                  <input type="date" value={range2End} onChange={e => setRange2End(e.target.value)} className="bg-surface-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:ring-2 focus:ring-surface-500 shadow-inner" style={{colorScheme:'dark'}} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-surface-800/20 border border-white/5 flex flex-col items-center justify-center min-h-[300px] relative">
-           <h3 className="absolute top-6 left-6 text-xs font-bold uppercase tracking-widest text-surface-500">Performance Footprint</h3>
-           <div className="w-full h-[280px] mt-6 flex justify-center">
-             <RadarChart data={radarData} />
-           </div>
-           <div className="flex gap-4 mt-2">
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-xs text-surface-300">Current</span></div>
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-surface-500 border border-surface-400 border-dashed"></div><span className="text-xs text-surface-300">Previous</span></div>
-           </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {renderStatCard('Accuracy', stat1.accuracy, stat2.accuracy, '%', false, true)}
+          {renderStatCard('Avg Time / Q', stat1.averageTime, stat2.averageTime, 'm', true, false)}
+          {renderStatCard('Volume (Attempted)', stat1.attempted, stat2.attempted, '', false, false)}
+          {renderStatCard('Mistakes (Incorrect)', stat1.incorrect, stat2.incorrect, '', true, false)}
         </div>
       </div>
     </section>

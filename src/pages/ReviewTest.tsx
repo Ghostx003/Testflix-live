@@ -1232,91 +1232,93 @@ export const ReviewTest: React.FC = () => {
             <div className="bg-gradient-to-br from-surface-900/80 to-surface-950/80 backdrop-blur-2xl px-5 py-4 rounded-[1.5rem] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.5)] relative overflow-hidden group transition-all duration-300 hover:border-primary-500/30">
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary-500/80 to-transparent opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
               
-              {/* Row 1: Title + Subject + Favorite */}
-              <div className="flex items-center gap-4 mb-3 relative z-10">
-                <div className="bg-primary-500/10 text-primary-400 border border-primary-500/20 px-2.5 py-1 rounded-lg shrink-0">
-                  <span className="text-[10px] font-black uppercase tracking-widest">Q{selectedQuestion.questionNumber}</span>
-                </div>
-                {isEditingTitle ? (
-                  <textarea 
-                    autoFocus 
-                    value={editTitleValue} 
-                    onChange={e => setEditTitleValue(e.target.value)}
-                    onBlur={() => {
-                      setIsEditingTitle(false);
-                      updateQuestion({ customTitle: editTitleValue });
-                    }} 
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
+              <div className="flex justify-between items-start gap-4 relative z-10">
+                {/* Left Side: Q Number + Title */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="bg-primary-500/10 text-primary-400 border border-primary-500/20 px-2.5 py-1 rounded-lg shrink-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest">Q{selectedQuestion.questionNumber}</span>
+                  </div>
+                  {isEditingTitle ? (
+                    <textarea 
+                      autoFocus 
+                      value={editTitleValue} 
+                      onChange={e => setEditTitleValue(e.target.value)}
+                      onBlur={() => {
                         setIsEditingTitle(false);
                         updateQuestion({ customTitle: editTitleValue });
-                      }
-                    }}
-                    className="flex-1 text-lg font-bold bg-surface-950/80 border border-primary-500/50 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500/50 resize-none min-h-[40px] shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all"
-                    rows={1}
-                  />
-                ) : (
-                  <h1 
-                    onDoubleClick={() => {
-                      setIsEditingTitle(true);
-                      setEditTitleValue(selectedQuestion.customTitle || `Question ${selectedQuestion.questionNumber}`);
-                    }} 
-                    className="flex-1 text-lg font-bold text-white cursor-text hover:text-primary-300 transition-colors truncate leading-snug drop-shadow-md"
-                    title="Double click to edit title"
-                  >
-                    {selectedQuestion.customTitle || `Question ${selectedQuestion.questionNumber}`}
-                  </h1>
-                )}
-
-                <div className="flex items-center gap-2 shrink-0">
-                  {test?.subjectId ? (
-                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 shadow-inner tracking-wide">
-                      {subjects.find(s => s.id === test.subjectId)?.name || 'Unknown'}
-                    </span>
-                  ) : (
-                    <select 
-                      className="bg-surface-950/80 border border-white/10 rounded-lg text-[10px] py-1.5 px-3 text-surface-100 focus:outline-none focus:ring-2 focus:ring-primary-500/50 cursor-pointer font-bold tracking-wide transition-all hover:border-white/20"
-                      value={selectedQuestion.subjectId || ''}
-                      onChange={async (e) => {
-                        const val = e.target.value;
-                        await updateQuestion({ subjectId: val ? Number(val) : undefined, topicIds: [] });
+                      }} 
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          setIsEditingTitle(false);
+                          updateQuestion({ customTitle: editTitleValue });
+                        }
                       }}
+                      className="flex-1 text-lg font-bold bg-surface-950/80 border border-primary-500/50 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500/50 resize-none min-h-[40px] shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all"
+                      rows={1}
+                    />
+                  ) : (
+                    <h1 
+                      onDoubleClick={() => {
+                        setIsEditingTitle(true);
+                        setEditTitleValue(selectedQuestion.customTitle || `Question ${selectedQuestion.questionNumber}`);
+                      }} 
+                      className="flex-1 text-lg font-bold text-white cursor-text hover:text-primary-300 transition-colors truncate leading-snug drop-shadow-md"
+                      title="Double click to edit title"
                     >
-                      <option value="">+ Subject</option>
-                      {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
+                      {selectedQuestion.customTitle || `Question ${selectedQuestion.questionNumber}`}
+                    </h1>
                   )}
-                  <button 
-                    onClick={() => updateQuestion({ isFavorite: !selectedQuestion.isFavorite })}
-                    className={cn("p-2 rounded-xl transition-all shrink-0 hover:scale-105", selectedQuestion.isFavorite ? "text-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_rgba(250,204,21,0.2)]" : "text-surface-500 hover:text-white bg-surface-800/50 border border-white/5")}
-                  >
-                    <Star className="w-4 h-4" fill={selectedQuestion.isFavorite ? "currentColor" : "none"} />
-                  </button>
                 </div>
-              </div>
 
-              {/* Row 2: Status Pills */}
-              <div className="flex items-center gap-1 relative z-10">
-                <div className="flex bg-surface-950/80 p-1 rounded-xl border border-white/5 shadow-inner backdrop-blur-md">
-                  {statuses.map(s => {
-                    const isActive = selectedQuestion.statusIds?.includes(s.id!);
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => handleStatusToggle(selectedQuestion.id!, s.id!)}
-                        className={cn(
-                          "px-3 py-1 rounded-lg text-[10px] font-black tracking-wider transition-all duration-300",
-                          isActive 
-                            ? "text-surface-950 shadow-[0_4px_15px_rgba(0,0,0,0.3)] scale-105" 
-                            : "text-surface-400 hover:text-white hover:bg-white/5"
-                        )}
-                        style={isActive ? { backgroundColor: s.color, boxShadow: `0 0 15px ${s.color}60` } : undefined}
+                {/* Right Side: Subject/Star + Status Pills */}
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
+                    {test?.subjectId ? (
+                      <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 shadow-inner tracking-wide">
+                        {subjects.find(s => s.id === test.subjectId)?.name || 'Unknown'}
+                      </span>
+                    ) : (
+                      <select 
+                        className="bg-surface-950/80 border border-white/10 rounded-lg text-[10px] py-1.5 px-3 text-surface-100 focus:outline-none focus:ring-2 focus:ring-primary-500/50 cursor-pointer font-bold tracking-wide transition-all hover:border-white/20"
+                        value={selectedQuestion.subjectId || ''}
+                        onChange={async (e) => {
+                          const val = e.target.value;
+                          await updateQuestion({ subjectId: val ? Number(val) : undefined, topicIds: [] });
+                        }}
                       >
-                        {s.name}
-                      </button>
-                    );
-                  })}
+                        <option value="">+ Subject</option>
+                        {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    )}
+                    <button 
+                      onClick={() => updateQuestion({ isFavorite: !selectedQuestion.isFavorite })}
+                      className={cn("p-2 rounded-xl transition-all shrink-0 hover:scale-105", selectedQuestion.isFavorite ? "text-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_rgba(250,204,21,0.2)]" : "text-surface-500 hover:text-white bg-surface-800/50 border border-white/5")}
+                    >
+                      <Star className="w-4 h-4" fill={selectedQuestion.isFavorite ? "currentColor" : "none"} />
+                    </button>
+                  </div>
+
+                  <div className="flex bg-surface-950/80 p-1 rounded-xl border border-white/5 shadow-inner backdrop-blur-md">
+                    {statuses.map(s => {
+                      const isActive = selectedQuestion.statusIds?.includes(s.id!);
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => handleStatusToggle(selectedQuestion.id!, s.id!)}
+                          className={cn(
+                            "px-3 py-1 rounded-lg text-[10px] font-black tracking-wider transition-all duration-300",
+                            isActive 
+                              ? "text-surface-950 shadow-[0_4px_15px_rgba(0,0,0,0.3)] scale-105" 
+                              : "text-surface-400 hover:text-white hover:bg-white/5"
+                          )}
+                          style={isActive ? { backgroundColor: s.color, boxShadow: `0 0 15px ${s.color}60` } : undefined}
+                        >
+                          {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1532,10 +1534,10 @@ export const ReviewTest: React.FC = () => {
                 ))}
               </AnimatePresence>
               <div className="grid grid-cols-2 gap-3">
-                <Button onClick={() => addCustomBlock('Detailed Solution')} className="w-full h-12 bg-surface-900/40 backdrop-blur-sm hover:bg-emerald-500/10 border-dashed border-2 border-surface-700 hover:border-emerald-500/50 text-surface-400 hover:text-emerald-400 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 font-black text-xs md:text-sm shadow-sm hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] group">
+                <Button onClick={() => addCustomBlock('Detailed Solution')} className="w-full h-12 bg-surface-900/40 backdrop-blur-sm hover:bg-emerald-500/10 border border-solid border-surface-700 hover:border-emerald-500/50 text-surface-400 hover:text-emerald-400 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 font-black text-xs md:text-sm shadow-sm hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] group">
                   <Plus className="w-4 h-4 group-hover:scale-125 transition-transform" /> Solution Block
                 </Button>
-                <Button onClick={() => addCustomBlock('New Block')} className="w-full h-12 bg-surface-900/40 backdrop-blur-sm hover:bg-purple-500/10 border-dashed border-2 border-surface-700 hover:border-purple-500/50 text-surface-400 hover:text-purple-400 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 font-black text-xs md:text-sm shadow-sm hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] group">
+                <Button onClick={() => addCustomBlock('New Block')} className="w-full h-12 bg-surface-900/40 backdrop-blur-sm hover:bg-purple-500/10 border border-solid border-surface-700 hover:border-purple-500/50 text-surface-400 hover:text-purple-400 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 font-black text-xs md:text-sm shadow-sm hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] group">
                   <Plus className="w-4 h-4 group-hover:scale-125 transition-transform" /> Custom Block
                 </Button>
               </div>
