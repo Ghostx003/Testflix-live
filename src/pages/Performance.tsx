@@ -1718,9 +1718,15 @@ export const Performance: React.FC = () => {
             <h2 className="mt-1 text-xl font-black text-white">Subject leaderboard</h2>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
-            <div className="flex bg-surface-900 border border-white/10 rounded-lg p-1">
-              <button onClick={() => setSubjectViewMode('questions')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all", subjectViewMode === 'questions' ? 'bg-surface-700 text-white shadow-sm' : 'text-surface-400 hover:text-surface-200')}>Questions</button>
-              <button onClick={() => setSubjectViewMode('tests')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all", subjectViewMode === 'tests' ? 'bg-surface-700 text-white shadow-sm' : 'text-surface-400 hover:text-surface-200')}>Tests</button>
+            <div className="flex bg-surface-900/50 backdrop-blur-md border border-white/10 rounded-xl p-1 relative shadow-inner">
+              <button onClick={() => setSubjectViewMode('questions')} className={cn("relative z-10 px-4 py-1.5 text-xs font-bold rounded-lg transition-colors", subjectViewMode === 'questions' ? 'text-white' : 'text-surface-400 hover:text-surface-200')}>
+                {subjectViewMode === 'questions' && <motion.div layoutId="subjectViewMode" className="absolute inset-0 bg-surface-700/80 rounded-lg border border-white/10 shadow-md -z-10" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />}
+                Questions
+              </button>
+              <button onClick={() => setSubjectViewMode('tests')} className={cn("relative z-10 px-4 py-1.5 text-xs font-bold rounded-lg transition-colors", subjectViewMode === 'tests' ? 'text-white' : 'text-surface-400 hover:text-surface-200')}>
+                {subjectViewMode === 'tests' && <motion.div layoutId="subjectViewMode" className="absolute inset-0 bg-surface-700/80 rounded-lg border border-white/10 shadow-md -z-10" transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }} />}
+                Tests
+              </button>
             </div>
             <label className="text-xs font-bold text-surface-400 uppercase tracking-widest whitespace-nowrap hidden sm:block">Sort by:</label>
             <select
@@ -1810,7 +1816,20 @@ export const Performance: React.FC = () => {
                         <span className="font-bold text-white">{subject.name}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-2 text-surface-300 font-bold">{subjectViewMode === 'tests' ? `${subject.testCount} Tests` : subject.attempted}</td>
+                    <td className="py-3.5 px-2 text-surface-300 font-bold">
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={subjectViewMode}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          transition={{ duration: 0.2 }}
+                          className="inline-block"
+                        >
+                          {subjectViewMode === 'tests' ? `${subject.testCount} Tests` : subject.attempted}
+                        </motion.span>
+                      </AnimatePresence>
+                    </td>
                     <td className="py-3.5 px-2 text-surface-300">{subject.score} / {subject.maxScore} <span className="text-[10px] text-surface-500 ml-1">({round(percent(subject.score, subject.maxScore))}%)</span></td>
                     <td className="py-3.5 px-2 text-emerald-400 font-bold">{subject.correct}</td>
                     <td className="py-3.5 px-2 text-rose-400 font-bold">{subject.incorrect}</td>
