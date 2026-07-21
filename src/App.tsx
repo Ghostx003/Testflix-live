@@ -11,6 +11,7 @@ import { Calendar } from './pages/Calendar';
 import { Bookmarks } from './pages/Bookmarks';
 import { Practice } from './pages/Practice';
 import { PracticeTest } from './pages/PracticeTest';
+import { Performance } from './pages/Performance';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { db } from './services/db';
 
@@ -24,6 +25,21 @@ const RequireSetup: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       try {
         const testsCount = await db.tests.count();
         const subjectsCount = await db.subjects.count();
+        
+        // --- Migration: Remove 'Left Out' status from all questions ---
+        const leftOutStatus = await db.statuses.where('name').equals('Left Out').first();
+        if (leftOutStatus && leftOutStatus.id) {
+          const qs = await db.questions.toArray();
+          const qsToUpdate = qs.filter(q => q.statusIds?.includes(leftOutStatus.id!));
+          if (qsToUpdate.length > 0) {
+            qsToUpdate.forEach(q => {
+              q.statusIds = q.statusIds.filter(id => id !== leftOutStatus.id!);
+            });
+            await db.questions.bulkPut(qsToUpdate);
+          }
+        }
+        // ----------------------------------------------------------------
+
         setHasDbData(testsCount > 0 || subjectsCount > 0);
       } catch (error) {
         console.error("Failed to check DB:", error);
@@ -50,12 +66,6 @@ const RequireSetup: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   }
   return <>{children}</>;
 };
-
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex h-full items-center justify-center">
-    <h1 className="text-2xl font-semibold text-surface-400">{title}</h1>
-  </div>
-);
 
 function App() {
   const [userProfile] = useLocalStorage('userProfile', { name: '', isFirstTime: true, hasCompletedSetup: false });
@@ -112,7 +122,7 @@ function App() {
           <Route path="practice" element={<Practice />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="bookmarks" element={<Bookmarks />} />
-          <Route path="performance" element={<Placeholder title="Performance (Coming Soon)" />} />
+          <Route path="performance" element={<Performance />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

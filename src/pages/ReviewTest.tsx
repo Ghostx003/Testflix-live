@@ -14,7 +14,7 @@ const CircularProgress = ({ percentage }: { percentage: number }) => {
   const radius = 24;
   const circ = 2 * Math.PI * radius;
   const strokeDashoffset = circ - (percentage / 100) * circ;
-  const color = percentage < 25 ? '#ef4444' : percentage < 50 ? '#eab308' : '#22c55e';
+  const color = percentage < 40 ? '#f43f5e' : percentage < 70 ? '#eab308' : '#10b981';
 
   return (
     <div className="relative w-14 h-14 flex items-center justify-center">
@@ -72,6 +72,7 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
   const globalTags = useLiveQuery(() => db.tags.toArray()) || [];
   const allStatuses = useLiveQuery(() => db.statuses.toArray()) || [];
   const allQuestions = useLiveQuery(() => db.questions.toArray()) || [];
+  const topics = useLiveQuery(() => db.topics.toArray()) || [];
 
   const [sortKey, setSortKey] = useState<'date' | 'accuracy' | 'score' | 'coaching' | 'subject' | 'type' | 'time'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -105,6 +106,25 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
     return map;
   }, [allQuestions]);
 
+  const testIdToSubjects = useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    const topicToSubject = new Map<number, number>();
+    topics.forEach(t => {
+      if (t.subjectId) topicToSubject.set(t.id!, t.subjectId);
+    });
+
+    allQuestions.forEach(q => {
+      if (!map.has(q.testId)) map.set(q.testId, new Set());
+      const testSubjects = map.get(q.testId)!;
+      if (q.subjectId) testSubjects.add(q.subjectId);
+      q.topicIds?.forEach(tid => {
+        const sid = topicToSubject.get(tid);
+        if (sid) testSubjects.add(sid);
+      });
+    });
+    return map;
+  }, [allQuestions, topics]);
+
   const clearFilters = () => {
     setFilterCoaching([]);
     setFilterSubject([]);
@@ -120,7 +140,13 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
   const filteredTests = useMemo(() => {
     return allTests.filter(t => {
       if (filterCoaching.length > 0 && !filterCoaching.includes(t.coachingId)) return false;
-      if (filterSubject.length > 0 && (!t.subjectId || !filterSubject.includes(t.subjectId))) return false;
+      if (filterSubject.length > 0) {
+        const testSubjects = testIdToSubjects.get(t.id!) || new Set();
+        const matchesTestOwnSubject = t.subjectId && filterSubject.includes(t.subjectId);
+        const matchesAnyQuestionSubject = filterSubject.some(fs => testSubjects.has(fs));
+        
+        if (!matchesTestOwnSubject && !matchesAnyQuestionSubject) return false;
+      }
       if (filterTestType.length > 0 && !filterTestType.includes(t.testTypeId)) return false;
       if (filterImportant !== 'all') {
         const isImp = !!t.isImportant;
@@ -157,7 +183,7 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
 
       return true;
     });
-  }, [allTests, filterCoaching, filterSubject, filterTestType, filterImportant, filterAccuracy, filterTag, filterStatus, testIdToTags, testIdToStatuses]);
+  }, [allTests, filterCoaching, filterSubject, filterTestType, filterImportant, filterAccuracy, filterTag, filterStatus, testIdToTags, testIdToStatuses, testIdToSubjects]);
 
   const sortedTests = useMemo(() => {
     const getCoachingName = (id: number) => coachings.find(c => c.id === id)?.name || '';
@@ -219,17 +245,35 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
 
   
   const filteredQuestions = useMemo(() => {
-    if (filterTag.length === 0 && filterStatus.length === 0) return [];
+    if (filterTag.length === 0 && filterStatus.length === 0 && filterSubject.length === 0) return [];
+    
+    const topicToSubject = new Map<number, number>();
+    topics.forEach(t => { if (t.subjectId) topicToSubject.set(t.id!, t.subjectId); });
+
     return allQuestions.filter(q => {
       const hasTag = filterTag.length > 0 && filterTag.some(ft => q.tagIds?.includes(ft));
       const hasStatus = filterStatus.length > 0 && filterStatus.some(fs => q.statusIds?.includes(fs));
       
-      if (filterTag.length > 0 && filterStatus.length > 0) return hasTag && hasStatus;
-      if (filterTag.length > 0) return hasTag;
-      if (filterStatus.length > 0) return hasStatus;
-      return false;
+      let hasSubject = false;
+      if (filterSubject.length > 0) {
+        if (q.subjectId && filterSubject.includes(q.subjectId)) {
+          hasSubject = true;
+        } else if (q.topicIds?.some(tid => { const sid = topicToSubject.get(tid); return sid && filterSubject.includes(sid); })) {
+          hasSubject = true;
+        } else {
+          const test = allTests.find(t => t.id === q.testId);
+          if (test && test.subjectId && filterSubject.includes(test.subjectId)) hasSubject = true;
+        }
+      }
+      
+      const activeFilters = [];
+      if (filterTag.length > 0) activeFilters.push(hasTag);
+      if (filterStatus.length > 0) activeFilters.push(hasStatus);
+      if (filterSubject.length > 0) activeFilters.push(hasSubject);
+
+      return activeFilters.every(f => f === true);
     });
-  }, [allQuestions, filterTag, filterStatus]);
+  }, [allQuestions, filterTag, filterStatus, filterSubject, topics, allTests]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
@@ -381,99 +425,10 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
         </motion.div>
       )}
 
-      {sortedTests.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-          <div className="w-20 h-20 glass-card rounded-3xl flex items-center justify-center">
-            <Search className="w-10 h-10 text-surface-500" />
-          </div>
-          <div>
-            <h3 className="text-2xl font-bold text-surface-50 tracking-tight">No Tests Found</h3>
-            <p className="text-surface-400 mt-2">Try adjusting your filters, or add a new test.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedTests.map((test: any) => {
-            const coachingName = getCoachingName(test.coachingId);
-            const typeName = getTestTypeName(test.testTypeId);
-            const subjectName = getSubjectName(test.subjectId);
-            const percentage = Math.max(0, Math.min(100, (test.marksObtained / test.maxMarks) * 100));
 
-            return (
-              <motion.div
-                key={test.id}
-                whileHover={{ y: -6, scale: 1.02 }}
-                onClick={() => onSelect(test.id!)}
-                className={cn(
-                  "cursor-pointer glass-card rounded-[2rem] p-6 flex flex-col gap-5 transition-all relative overflow-hidden group border hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-h-[220px]",
-                  test.isImportant ? "border-yellow-500/50 hover:border-yellow-400" : "border-white/5 hover:border-primary-500/30"
-                )}
-              >
-                {/* Actions Area */}
-                <div className="absolute top-4 right-4 flex gap-2 z-20">
-                  {test.isImportant && (
-                    <div className="p-2 bg-yellow-500/20 text-yellow-500 rounded-xl">
-                      <Star className="w-4 h-4" fill="currentColor" />
-                    </div>
-                  )}
-                  {/* Trash Button */}
-                  <button 
-                    onClick={(e) => handleDelete(e, test.id!)}
-                    className="p-2.5 bg-red-500/90 hover:bg-red-500 text-white rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-0 group-hover:delay-[1000ms]"
-                    title="Delete Test"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
-                
-                <div className="flex items-start justify-between z-10">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-primary-400">{coachingName}</span>
-                    <h3 className="text-2xl font-bold text-white leading-tight pr-10">{typeName}</h3>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {subjectName && (
-                        <span className="inline-block self-start text-[10px] font-bold uppercase tracking-wider text-surface-300 bg-surface-800/80 px-2.5 py-1 rounded-md border border-white/5">
-                          {subjectName}
-                        </span>
-                      )}
-                      {test.tagIds?.map((tagId: number) => {
-                        const tag = globalTags.find(t => t.id === tagId);
-                        if (!tag) return null;
-                        return (
-                          <span 
-                            key={tagId} 
-                            className="inline-block self-start text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md"
-                            style={{ backgroundColor: tag.color ? tag.color + '20' : 'rgba(99,102,241,0.1)', color: tag.color || '#818cf8', border: `1px solid ${tag.color ? tag.color + '40' : 'rgba(99,102,241,0.2)'}` }}
-                          >
-                            #{tag.name}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <CircularProgress percentage={percentage} />
-                </div>
-
-                <div className="mt-auto z-10 pt-5 border-t border-white/5 flex items-center justify-between text-sm font-medium text-surface-400 flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-surface-800/50 px-3 py-1.5 rounded-lg">{test.marksObtained} / {test.maxMarks}</span>
-                    <span className="bg-surface-800/50 px-3 py-1.5 rounded-lg">{test.questionsCount} Qs</span>
-                  </div>
-                  <span className="text-xs font-bold text-surface-500 bg-surface-900/50 px-2 py-1.5 rounded-lg whitespace-nowrap">
-                    {new Date(test.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    {test.timeTaken && ` • ${test.timeTaken}`}
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
 
       {filteredQuestions.length > 0 && (
-        <div className="pt-10 border-t border-white/10 mt-10">
+        <div className="pb-10 border-b border-white/10 mb-10">
           <div className="flex items-center gap-3 mb-6">
             <h2 className="text-2xl font-black text-white tracking-tight">Matching Questions</h2>
             <div className="px-3 py-1 rounded-full bg-surface-800 border border-white/5 text-xs font-bold text-surface-300">
@@ -523,6 +478,140 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
         </div>
       )}
 
+      {sortedTests.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+          <div className="w-20 h-20 glass-card rounded-3xl flex items-center justify-center">
+            <Search className="w-10 h-10 text-surface-500" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-bold text-surface-50 tracking-tight">No Tests Found</h3>
+            <p className="text-surface-400 mt-2">Try adjusting your filters, or add a new test.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {sortedTests.map((test: any) => {
+            const coachingName = getCoachingName(test.coachingId);
+            const typeName = getTestTypeName(test.testTypeId);
+            const subjectName = getSubjectName(test.subjectId);
+            
+            let displayMarks = Number(test.marksObtained) || 0;
+            let displayMaxMarks = Number(test.maxMarks) || 5;
+            
+            const tqs = allQuestions.filter(q => q.testId === test.id);
+            let hasStatuses = false;
+            let incorrect = 0;
+            let skipped = 0;
+            
+            tqs.forEach(q => {
+               if (q.statusIds && q.statusIds.length > 0) hasStatuses = true;
+               const names = q.statusIds?.map((id: number) => allStatuses.find(s => s.id === id)?.name?.toLowerCase() || '') || [];
+               if (names.includes('incorrect')) incorrect++;
+               if (names.includes('left out')) skipped++;
+            });
+            
+            if (hasStatuses) {
+               const total = Math.max(Number(test.questionsCount) || 0, tqs.length);
+               const attempted = total - skipped;
+               const correct = Math.max(0, attempted - incorrect);
+               if (total > 0) {
+                 displayMarks = Number(((correct / total) * displayMaxMarks).toFixed(1));
+               }
+            }
+
+            const percentage = displayMaxMarks > 0 ? Math.max(0, Math.min(100, (displayMarks / displayMaxMarks) * 100)) : 0;
+
+            return (
+              <motion.div
+                key={test.id}
+                whileHover={{ y: -6, scale: 1.02 }}
+                onClick={() => onSelect(test.id!)}
+                className={cn(
+                  "cursor-pointer glass-card rounded-[2rem] p-6 flex flex-col gap-5 transition-all relative overflow-hidden group border hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] min-h-[220px]",
+                  test.isImportant ? "border-yellow-500/50 hover:border-yellow-400" : "border-white/5 hover:border-primary-500/30"
+                )}
+              >
+                {/* Actions Area */}
+                <div className="absolute top-4 right-4 flex gap-2 z-20">
+                  {test.isImportant && (
+                    <div className="p-2 bg-yellow-500/20 text-yellow-500 rounded-xl">
+                      <Star className="w-4 h-4" fill="currentColor" />
+                    </div>
+                  )}
+                  {/* Trash Button */}
+                  <button 
+                    onClick={(e) => handleDelete(e, test.id!)}
+                    className="p-2.5 bg-red-500/90 hover:bg-red-500 text-white rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-0 group-hover:delay-[1000ms]"
+                    title="Delete Test"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
+                
+                <div className="flex items-start justify-between z-10">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-bold uppercase tracking-widest text-primary-400">{coachingName}</span>
+                    <h3 className="text-2xl font-bold text-white leading-tight pr-10">{typeName}</h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {(() => {
+                        const testSubjectIds = new Set<number>();
+                        if (test.subjectId) testSubjectIds.add(test.subjectId);
+                        
+                        const typeNameLower = typeName.toLowerCase();
+                        if (typeNameLower.includes('full length') || typeNameLower.includes('weekly') || !test.subjectId) {
+                          allQuestions.filter(q => q.testId === test.id).forEach(q => {
+                            if (q.subjectId) testSubjectIds.add(q.subjectId);
+                          });
+                        }
+                        
+                        return Array.from(testSubjectIds).map(sId => {
+                          const sName = getSubjectName(sId);
+                          if (!sName) return null;
+                          return (
+                            <span key={`subj-${sId}`} className="inline-block self-start text-[10px] font-bold uppercase tracking-wider text-surface-300 bg-surface-800/80 px-2.5 py-1 rounded-md border border-white/5">
+                              {sName}
+                            </span>
+                          );
+                        });
+                      })()}
+                      {test.tagIds?.map((tagId: number) => {
+                        const tag = globalTags.find(t => t.id === tagId);
+                        if (!tag) return null;
+                        return (
+                          <span 
+                            key={`tag-${tagId}`} 
+                            className="inline-block self-start text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md"
+                            style={{ backgroundColor: tag.color ? tag.color + '20' : 'rgba(99,102,241,0.1)', color: tag.color || '#818cf8', border: `1px solid ${tag.color ? tag.color + '40' : 'rgba(99,102,241,0.2)'}` }}
+                          >
+                            #{tag.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <CircularProgress percentage={percentage} />
+                </div>
+
+                <div className="mt-auto z-10 pt-5 border-t border-white/5 flex items-center justify-between text-sm font-medium text-surface-400 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-surface-800/50 px-3 py-1.5 rounded-lg">{displayMarks} / {displayMaxMarks}</span>
+                    <span className="bg-surface-800/50 px-3 py-1.5 rounded-lg">{test.questionsCount} Qs</span>
+                  </div>
+                  <span className="text-xs font-bold text-surface-500 bg-surface-900/50 px-2 py-1.5 rounded-lg whitespace-nowrap">
+                    {new Date(test.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {test.timeTaken && ` • ${test.timeTaken}`}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+
+
       {viewingQuestion && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 backdrop-blur-xl bg-surface-950/80">
           <div className="relative w-full max-w-5xl h-full max-h-full flex flex-col bg-surface-900 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
@@ -560,6 +649,7 @@ export const ReviewTest: React.FC = () => {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'editor' | 'viewer'>('editor');
   const [showTestTags, setShowTestTags] = useState(false);
+  const [bulkStatusId, setBulkStatusId] = useState<number | ''>('');
   
   // Data Fetching
   const test = useLiveQuery(() => testId ? db.tests.get(testId) : undefined, [testId]);
@@ -931,6 +1021,31 @@ export const ReviewTest: React.FC = () => {
             title={viewMode === 'editor' ? 'Switch to Viewer Mode' : 'Switch to Editor Mode'}
           >
             {viewMode === 'viewer' ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+          </button>
+        </div>
+        
+        <div className="px-4 pb-4 relative z-20 flex gap-2">
+          <select 
+            value={bulkStatusId}
+            onChange={e => setBulkStatusId(e.target.value ? Number(e.target.value) : '')}
+            className="bg-surface-800/50 border border-transparent focus:border-primary-500/50 rounded-xl text-xs font-bold text-surface-300 px-3 py-2 flex-1 outline-none h-9 cursor-pointer"
+          >
+            <option value="" className="bg-surface-900 text-white">Mark unmarked as...</option>
+            {statuses.map(s => <option key={s.id} value={s.id} className="bg-surface-900 text-white">{s.name}</option>)}
+          </select>
+          <button 
+            onClick={async () => {
+              if (!bulkStatusId) return;
+              const unmarked = questions.filter(q => !q.statusIds || q.statusIds.length === 0);
+              for (const q of unmarked) {
+                await db.questions.update(q.id!, { statusIds: [bulkStatusId] });
+              }
+              setBulkStatusId('');
+            }}
+            disabled={!bulkStatusId}
+            className="px-3 h-9 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:hover:bg-primary-500 text-white font-bold rounded-xl text-xs transition-colors shrink-0"
+          >
+            Apply
           </button>
         </div>
         

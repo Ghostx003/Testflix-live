@@ -16,14 +16,20 @@ export const AddTest: React.FC = () => {
   // Form State
   const [coachingId, setCoachingId] = useState<number | ''>('');
   const [testTypeId, setTestTypeId] = useState<number | ''>('');
-  const [subjectId, setSubjectId] = useState<number | '' | 'none'>('');
+  const [subjectId, setSubjectId] = useState<number | 'none'>('');
   const [newSubject, setNewSubject] = useState('');
+  const [topicId, setTopicId] = useState<number | ''>('');
+  const [newTopic, setNewTopic] = useState('');
   
   const [questionsCount, setQuestionsCount] = useState<number | ''>('');
   const [maxMarks, setMaxMarks] = useState<number | ''>('');
   const [marksObtained, setMarksObtained] = useState<number | ''>('');
   const [timeTaken, setTimeTaken] = useState('');
+  const [timeUnit, setTimeUnit] = useState('mins');
+  const [timeLimit, setTimeLimit] = useState('');
+  const [timeLimitUnit, setTimeLimitUnit] = useState('mins');
   const [link, setLink] = useState('');
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   
   // Date and Time of giving the test
   const [testDate, setTestDate] = useState(() => {
@@ -36,6 +42,8 @@ export const AddTest: React.FC = () => {
   const coachings = useLiveQuery(() => db.coachings.toArray()) || [];
   const testTypes = useLiveQuery(() => db.testTypes.toArray()) || [];
   const subjects = useLiveQuery(() => db.subjects.toArray()) || [];
+  const topics = useLiveQuery(() => db.topics.toArray()) || [];
+  const tags = useLiveQuery(() => db.tags.toArray()) || [];
 
   const handleNext = () => {
     const selectedTestType = testTypes.find(t => t.id === testTypeId);
@@ -67,6 +75,17 @@ export const AddTest: React.FC = () => {
     }
   };
 
+  const handleCreateTopic = async () => {
+    if (newTopic.trim() && subjectId && subjectId !== 'none') {
+      const id = await db.topics.add({ 
+        name: newTopic.trim(),
+        subjectId: Number(subjectId)
+      });
+      setTopicId(id as number);
+      setNewTopic('');
+    }
+  };
+
   const handleGenerateTest = async () => {
     if (coachingId && testTypeId && questionsCount && maxMarks && marksObtained !== '') {
       // 1. Create Test Record
@@ -74,23 +93,23 @@ export const AddTest: React.FC = () => {
         coachingId: Number(coachingId),
         testTypeId: Number(testTypeId),
         subjectId: subjectId && subjectId !== 'none' ? Number(subjectId) : undefined,
+        topicId: topicId !== '' ? Number(topicId) : undefined,
         questionsCount: Number(questionsCount),
         maxMarks: Number(maxMarks),
         marksObtained: Number(marksObtained),
-        timeTaken: timeTaken.trim() || undefined,
+        timeTaken: timeTaken.trim() ? `${timeTaken.trim()} ${timeUnit}` : undefined,
+        timeLimit: timeLimit.trim() ? `${timeLimit.trim()} ${timeLimitUnit}` : undefined,
         link: link.trim() || undefined,
-        createdAt: new Date(testDate).getTime()
+        createdAt: new Date(testDate).getTime(),
+        tagIds: selectedTagIds
       })) as number;
-
-      // 2. Generate Question Records
-      const defaultStatus = await db.statuses.where('name').equals('Left Out').first();
-      const statusId = defaultStatus?.id || 1; 
 
       const questionsToInsert = Array.from({ length: Number(questionsCount) }).map((_, i) => ({
         testId,
         questionNumber: i + 1,
-        statusIds: [statusId],
+        statusIds: [],
         tagIds: [],
+        topicIds: topicId !== '' ? [Number(topicId)] : [],
         isFavorite: false,
         testDate: new Date(testDate).getTime()
       }));
@@ -98,7 +117,7 @@ export const AddTest: React.FC = () => {
       await db.questions.bulkAdd(questionsToInsert);
 
       // Redirect to the newly created test
-      navigate(`/app/review-test?testId=${testId}`);
+      navigate(`/app/test-dashboard?testId=${testId}`);
     }
   };
 
@@ -175,7 +194,10 @@ export const AddTest: React.FC = () => {
             <label className={labelClassName}>Primary Subject {isPartiallyDependent && "(Optional)"}</label>
             <Select 
               value={subjectId}
-              onChange={(val) => setSubjectId(val as number | 'none')}
+              onChange={(val) => {
+                setSubjectId(val as number | 'none');
+                setTopicId('');
+              }}
               options={[
                 ...(!isFullyDependent ? [{ value: 'none', label: '-- None (Not Applicable) --' }] : []),
                 ...subjects.map(c => ({ value: c.id!, label: c.name }))
@@ -184,6 +206,32 @@ export const AddTest: React.FC = () => {
               disabled={isNotDependent}
             />
           </motion.div>
+
+          {subjectId && subjectId !== 'none' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="space-y-4">
+              <div className="space-y-2">
+                <label className={labelClassName}>Primary Topic (Optional)</label>
+                <Select 
+                  value={topicId}
+                  onChange={(val) => setTopicId(val as number | '')}
+                  options={[
+                    { value: '', label: '-- None --' },
+                    ...topics.filter(t => t.subjectId === subjectId).map(t => ({ value: t.id!, label: t.name }))
+                  ]}
+                  placeholder="Select a topic (if entire test focuses on one)"
+                />
+              </div>
+              <div className="flex gap-3 items-center">
+                <Input 
+                  value={newTopic}
+                  onChange={(e) => setNewTopic(e.target.value)}
+                  placeholder="Or create a new topic..."
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateTopic()}
+                />
+                <Button variant="outline" onClick={handleCreateTopic} disabled={!newTopic.trim()} className="h-11">Create Topic</Button>
+              </div>
+            </motion.div>
+          )}
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -281,13 +329,67 @@ export const AddTest: React.FC = () => {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className={labelClassName}>Time Taken (Optional)</label>
-            <Input value={timeTaken} onChange={(e) => setTimeTaken(e.target.value)} placeholder="e.g. 45 mins, 2 hours..." />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className={labelClassName}>Time Taken (Optional)</label>
+              <div className="flex gap-2">
+                <Input type="number" value={timeTaken} onChange={(e) => setTimeTaken(e.target.value)} placeholder="e.g. 45" className="flex-1" />
+                <select value={timeUnit} onChange={(e) => setTimeUnit(e.target.value)} className="bg-surface-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-500 w-24">
+                  <option value="mins">Mins</option>
+                  <option value="hours">Hours</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className={labelClassName}>Out of Total Time (Optional)</label>
+              <div className="flex gap-2">
+                <Input type="number" value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} placeholder="e.g. 60" className="flex-1" />
+                <select value={timeLimitUnit} onChange={(e) => setTimeLimitUnit(e.target.value)} className="bg-surface-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-500 w-24">
+                  <option value="mins">Mins</option>
+                  <option value="hours">Hours</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div className="space-y-2">
             <label className={labelClassName}>Original Test Link (Optional)</label>
             <Input type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://..." />
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
+          <label className={labelClassName}>Tags (Optional)</label>
+          <div className="flex flex-wrap gap-3">
+            {tags.map(tag => {
+              const isSelected = selectedTagIds.includes(tag.id!);
+              return (
+                <button
+                  key={tag.id}
+                  onClick={() => {
+                    if (isSelected) setSelectedTagIds(prev => prev.filter(id => id !== tag.id!));
+                    else setSelectedTagIds(prev => [...prev, tag.id!]);
+                  }}
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl text-sm font-bold transition-all border flex items-center gap-2.5",
+                    !isSelected && "bg-surface-800/50 hover:bg-surface-700/50 border-white/5"
+                  )}
+                  style={
+                    isSelected 
+                      ? { 
+                          backgroundColor: `${tag.color || '#6366f1'}20`, 
+                          borderColor: `${tag.color || '#6366f1'}50`, 
+                          color: tag.color || '#818cf8',
+                          boxShadow: `0 0 15px ${tag.color || '#6366f1'}15`
+                        } 
+                      : { color: '#a1a1aa' }
+                  }
+                >
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color || '#6366f1', opacity: isSelected ? 1 : 0.6 }} />
+                  {tag.name}
+                </button>
+              )
+            })}
+            {tags.length === 0 && <span className="text-xs text-surface-500">No tags available. Create tags during test review.</span>}
           </div>
         </motion.div>
       </div>

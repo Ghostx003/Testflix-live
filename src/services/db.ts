@@ -53,6 +53,7 @@ export interface Test {
   maxMarks: number;
   marksObtained: number;
   timeTaken?: string;
+  timeLimit?: string;
   link?: string;
   createdAt: number;
   isImportant?: boolean;
