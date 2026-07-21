@@ -1228,66 +1228,11 @@ export const ReviewTest: React.FC = () => {
               </>
             ) : (
               <>
-            {/* Header: Subject + Status + Title */}
-            <div className="bg-surface-900/50 p-5 rounded-[2rem] border border-white/5 shadow-lg flex flex-col gap-4">
-              
-              {/* Top Row: Subject & Status */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                {/* Subject */}
-                <div className="shrink-0">
-                  {test?.subjectId ? (
-                    <span className="text-xs font-bold text-primary-300 bg-primary-500/10 px-3 py-1.5 rounded-lg border border-primary-500/20 shadow-inner">
-                      {subjects.find(s => s.id === test.subjectId)?.name || 'Unknown'}
-                    </span>
-                  ) : (
-                    <select 
-                      className="bg-surface-800 border border-white/10 rounded-lg text-xs py-1.5 px-3 text-surface-100 focus:outline-none focus:ring-2 focus:ring-primary-500/50 cursor-pointer shadow-inner"
-                      value={selectedQuestion.subjectId || ''}
-                      onChange={async (e) => {
-                        const val = e.target.value;
-                        await updateQuestion({ subjectId: val ? Number(val) : undefined, topicIds: [] });
-                      }}
-                    >
-                      <option value="">+ Subject</option>
-                      {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  )}
-                </div>
-
-                {/* Status Pills right-hand side */}
-                <div className="flex items-center gap-3 shrink-0 overflow-x-auto">
-                  <div className="flex bg-surface-950/80 p-1 rounded-xl border border-white/5 shadow-inner">
-                    {statuses.map(s => {
-                      const isActive = selectedQuestion.statusIds?.includes(s.id!);
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() => handleStatusToggle(selectedQuestion.id!, s.id!)}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all",
-                            isActive 
-                              ? "text-surface-950 shadow-[0_2px_10px_rgba(0,0,0,0.3)] scale-105" 
-                              : "text-surface-400 hover:text-white"
-                          )}
-                          style={isActive ? { backgroundColor: s.color } : undefined}
-                        >
-                          {s.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button 
-                    onClick={() => updateQuestion({ isFavorite: !selectedQuestion.isFavorite })}
-                    className={cn("p-2 rounded-xl transition-all shadow-sm shrink-0", selectedQuestion.isFavorite ? "text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20" : "text-surface-500 hover:text-white bg-surface-800/50 hover:bg-surface-800")}
-                  >
-                    <Star className="w-5 h-5" fill={selectedQuestion.isFavorite ? "currentColor" : "none"} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Title Row */}
-              <div className="w-full">
+            {/* Compact Header Bar */}
+            <div className="bg-surface-900/50 px-4 py-3 rounded-2xl border border-white/5 shadow-lg">
+              {/* Row 1: Title + Subject + Favorite */}
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-surface-500 text-xs font-black shrink-0">Q{selectedQuestion.questionNumber}</span>
                 {isEditingTitle ? (
                   <textarea 
                     autoFocus 
@@ -1304,8 +1249,8 @@ export const ReviewTest: React.FC = () => {
                         updateQuestion({ customTitle: editTitleValue });
                       }
                     }}
-                    className="w-full text-lg md:text-xl font-bold bg-surface-800/50 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary-500/50 resize-none min-h-[60px]"
-                    rows={2}
+                    className="flex-1 text-base font-bold bg-surface-800/50 border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-primary-500/50 resize-none min-h-[32px]"
+                    rows={1}
                   />
                 ) : (
                   <h1 
@@ -1313,142 +1258,194 @@ export const ReviewTest: React.FC = () => {
                       setIsEditingTitle(true);
                       setEditTitleValue(selectedQuestion.customTitle || `Question ${selectedQuestion.questionNumber}`);
                     }} 
-                    className="text-lg md:text-xl font-bold text-white cursor-text hover:text-primary-200 transition-colors break-words leading-snug"
+                    className="flex-1 text-base font-bold text-white cursor-text hover:text-primary-200 transition-colors truncate leading-snug"
                     title="Double click to edit title"
                   >
                     {selectedQuestion.customTitle || `Question ${selectedQuestion.questionNumber}`}
                   </h1>
                 )}
-              </div>
-            </div>
 
-            {/* Topics & Tags Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Topics Selection */}
-              <div className="glass-card p-6 md:p-8 rounded-[2rem] border-t border-white/10 shadow-2xl space-y-4">
-                <span className="text-sm font-bold text-surface-400 uppercase tracking-widest block">Topics</span>
-                {!effectiveSubjectId ? (
-                  <p className="text-surface-500 text-sm font-medium">Please select a subject to assign topics.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-3 items-center">
-                    {suggestedTopics.map(topic => {
-                      const isActive = selectedQuestion.topicIds?.includes(topic.id!);
-                      return (
-                        <button
-                          key={topic.id}
-                          onClick={() => handleTopicToggle(selectedQuestion.id!, topic.id!)}
-                          className={cn(
-                            "px-4 py-2 text-sm rounded-xl border transition-all font-bold",
-                            isActive
-                              ? "bg-primary-500 text-white border-primary-400 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
-                              : "bg-surface-800 text-surface-300 border-white/5 hover:bg-surface-700 hover:text-white"
-                          )}
-                        >
-                          {topic.name}
-                        </button>
-                      );
-                    })}
-                    <Input 
-                      placeholder="+ Topic..." 
-                      value={newTopicInput}
-                      onChange={(e) => setNewTopicInput(e.target.value)}
-                      onKeyDown={handleAddNewTopic}
-                      className="h-10 text-sm w-32 bg-surface-900 border-dashed border-white/10 focus:border-primary-500 focus:bg-surface-800 rounded-xl px-4"
-                    />
-                  </div>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {test?.subjectId ? (
+                    <span className="text-[10px] font-bold text-primary-300 bg-primary-500/10 px-2 py-1 rounded-lg border border-primary-500/20">
+                      {subjects.find(s => s.id === test.subjectId)?.name || 'Unknown'}
+                    </span>
+                  ) : (
+                    <select 
+                      className="bg-surface-800 border border-white/10 rounded-lg text-[10px] py-1 px-2 text-surface-100 focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer"
+                      value={selectedQuestion.subjectId || ''}
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        await updateQuestion({ subjectId: val ? Number(val) : undefined, topicIds: [] });
+                      }}
+                    >
+                      <option value="">+ Subject</option>
+                      {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  )}
+                  <button 
+                    onClick={() => updateQuestion({ isFavorite: !selectedQuestion.isFavorite })}
+                    className={cn("p-1.5 rounded-lg transition-all shrink-0", selectedQuestion.isFavorite ? "text-yellow-500 bg-yellow-500/10" : "text-surface-500 hover:text-white bg-surface-800/50")}
+                  >
+                    <Star className="w-4 h-4" fill={selectedQuestion.isFavorite ? "currentColor" : "none"} />
+                  </button>
+                </div>
               </div>
 
-              {/* Tags Selection */}
-              <div className="glass-card p-6 md:p-8 rounded-[2rem] border-t border-white/10 shadow-2xl space-y-4">
-                <span className="text-sm font-bold text-surface-400 uppercase tracking-widest block">Tags</span>
-                <div className="flex flex-wrap gap-3 items-center">
-                  {globalTags.map(tag => {
-                    const isActive = selectedQuestion.tagIds?.includes(tag.id!);
+              {/* Row 2: Status Pills */}
+              <div className="flex items-center gap-1">
+                <div className="flex bg-surface-950/80 p-0.5 rounded-lg border border-white/5">
+                  {statuses.map(s => {
+                    const isActive = selectedQuestion.statusIds?.includes(s.id!);
                     return (
                       <button
-                        key={tag.id}
-                        onClick={() => handleTagToggle(selectedQuestion.id!, tag.id!)}
-                        style={isActive && tag.color ? { backgroundColor: tag.color, borderColor: tag.color, boxShadow: `0 0 15px ${tag.color}66` } : undefined}
+                        key={s.id}
+                        onClick={() => handleStatusToggle(selectedQuestion.id!, s.id!)}
                         className={cn(
-                          "px-4 py-2 text-sm rounded-xl border transition-all font-bold",
-                          isActive
-                            ? (tag.color ? "text-white" : "bg-purple-500 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)]")
-                            : "bg-surface-800 text-surface-300 border-white/5 hover:bg-surface-700 hover:text-white"
+                          "px-2 py-0.5 rounded-md text-[10px] font-bold transition-all",
+                          isActive 
+                            ? "text-surface-950 shadow-sm scale-105" 
+                            : "text-surface-400 hover:text-white"
                         )}
+                        style={isActive ? { backgroundColor: s.color } : undefined}
                       >
-                        #{tag.name}
+                        {s.name}
                       </button>
                     );
                   })}
-                  <Input 
-                    placeholder="+ Tag..." 
-                    value={newTagInput}
-                    onChange={(e) => setNewTagInput(e.target.value)}
-                    onKeyDown={handleAddNewGlobalTag}
-                    className="h-10 text-sm w-32 bg-surface-900 border-dashed border-white/10 focus:border-purple-500 focus:bg-surface-800 rounded-xl px-4"
-                  />
                 </div>
               </div>
             </div>
 
-            {/* Image OR Text Question Block */}
-            <div className="glass-card p-6 md:p-8 rounded-[2rem] border-t border-white/10 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between pb-2">
-                <h3 className="text-sm font-bold text-surface-400 uppercase tracking-widest flex items-center gap-2"><ImageIcon className="w-4 h-4"/> Question Content</h3>
+            {/* Topics & Tags — Single Compact Row */}
+            <div className="bg-surface-900/30 px-4 py-3 rounded-xl border border-white/5">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Topics */}
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-bold text-surface-500 uppercase tracking-wider mb-1.5 block">Topics</span>
+                  {!effectiveSubjectId ? (
+                    <p className="text-surface-600 text-xs">Select a subject first</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {suggestedTopics.map(topic => {
+                        const isActive = selectedQuestion.topicIds?.includes(topic.id!);
+                        return (
+                          <button
+                            key={topic.id}
+                            onClick={() => handleTopicToggle(selectedQuestion.id!, topic.id!)}
+                            className={cn(
+                              "px-2.5 py-1 text-[11px] rounded-lg border transition-all font-bold",
+                              isActive
+                                ? "bg-primary-500 text-white border-primary-400 shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                                : "bg-surface-800 text-surface-300 border-white/5 hover:bg-surface-700 hover:text-white"
+                            )}
+                          >
+                            {topic.name}
+                          </button>
+                        );
+                      })}
+                      <Input 
+                        placeholder="+ Topic..." 
+                        value={newTopicInput}
+                        onChange={(e) => setNewTopicInput(e.target.value)}
+                        onKeyDown={handleAddNewTopic}
+                        className="h-7 text-[11px] w-24 bg-surface-900 border-dashed border-white/10 focus:border-primary-500 rounded-lg px-2"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="hidden sm:block w-px bg-white/5 self-stretch" />
+
+                {/* Tags */}
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-bold text-surface-500 uppercase tracking-wider mb-1.5 block">Tags</span>
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    {globalTags.map(tag => {
+                      const isActive = selectedQuestion.tagIds?.includes(tag.id!);
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => handleTagToggle(selectedQuestion.id!, tag.id!)}
+                          style={isActive && tag.color ? { backgroundColor: tag.color, borderColor: tag.color, boxShadow: `0 0 10px ${tag.color}44` } : undefined}
+                          className={cn(
+                            "px-2.5 py-1 text-[11px] rounded-lg border transition-all font-bold",
+                            isActive
+                              ? (tag.color ? "text-white" : "bg-purple-500 text-white border-purple-400")
+                              : "bg-surface-800 text-surface-300 border-white/5 hover:bg-surface-700 hover:text-white"
+                          )}
+                        >
+                          #{tag.name}
+                        </button>
+                      );
+                    })}
+                    <Input 
+                      placeholder="+ Tag..." 
+                      value={newTagInput}
+                      onChange={(e) => setNewTagInput(e.target.value)}
+                      onKeyDown={handleAddNewGlobalTag}
+                      className="h-7 text-[11px] w-24 bg-surface-900 border-dashed border-white/10 focus:border-purple-500 rounded-lg px-2"
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Question Content */}
+            <div className="bg-surface-900/30 px-4 py-3 rounded-xl border border-white/5">
+              <h3 className="text-[10px] font-bold text-surface-500 uppercase tracking-wider mb-2 flex items-center gap-1.5"><ImageIcon className="w-3 h-3"/> Question Content</h3>
               
               {selectedQuestion.questionImage ? (
                 <ImagePreview file={selectedQuestion.questionImage} onRemove={() => updateQuestion({ questionImage: undefined })} />
               ) : (
                 <div 
-                  className="w-full bg-surface-900/50 rounded-2xl border border-white/5 shadow-inner flex flex-col focus-within:ring-2 focus-within:ring-primary-500/50 transition-all overflow-hidden relative"
+                  className="w-full bg-surface-900/50 rounded-xl border border-white/5 flex flex-col focus-within:ring-2 focus-within:ring-primary-500/50 transition-all overflow-hidden relative"
                 >
                   <textarea 
                     value={selectedQuestion.questionText || ''}
                     onChange={e => updateQuestion({ questionText: e.target.value })}
-                    className="w-full bg-transparent border-none text-surface-100 placeholder:text-surface-600 resize-none focus:outline-none focus:ring-0 font-medium leading-relaxed p-5 h-auto min-h-[140px]"
+                    className="w-full bg-transparent border-none text-surface-100 placeholder:text-surface-600 resize-none focus:outline-none focus:ring-0 font-medium leading-relaxed p-4 h-auto min-h-[100px] text-sm"
                     rows={(selectedQuestion.questionText || '').split('\n').length || 1}
                     placeholder="Type text, or Ctrl+V / Click the button to paste an image instead..."
                   />
                   {!selectedQuestion.questionText && (
                     <button 
                       onClick={() => handleOneClickPaste()}
-                      className="absolute right-5 bottom-5 px-5 py-2.5 bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white rounded-xl text-sm font-bold flex items-center gap-2 border border-white/5 shadow-md transition-all z-10 group"
+                      className="absolute right-3 bottom-3 px-3 py-1.5 bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1.5 border border-white/5 shadow-md transition-all z-10 group"
                     >
-                      <UploadCloud className="w-4 h-4 text-surface-500 group-hover:text-primary-400 transition-colors" /> 
-                      Click to Paste Image/Text
+                      <UploadCloud className="w-3.5 h-3.5 text-surface-500 group-hover:text-primary-400 transition-colors" /> 
+                      Paste Image/Text
                     </button>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Answer Options Block */}
-            <div className="glass-card p-5 md:p-6 rounded-2xl border-t border-white/10 space-y-6 shadow-lg">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h3 className="text-sm font-bold text-surface-400 uppercase tracking-widest flex items-center gap-2"><CheckSquare className="w-4 h-4"/> Answer Selection</h3>
+            {/* Answer Options */}
+            <div className="bg-surface-900/30 px-4 py-3 rounded-xl border border-white/5">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h3 className="text-[10px] font-bold text-surface-500 uppercase tracking-wider flex items-center gap-1.5"><CheckSquare className="w-3 h-3"/> Answer</h3>
                 
-                <div className="flex bg-surface-900/80 p-1.5 rounded-xl border border-white/5 shadow-inner">
+                <div className="flex bg-surface-900/80 p-0.5 rounded-lg border border-white/5">
                   <button 
                     onClick={() => updateQuestion({optionsType: selectedQuestion.optionsType === 'MCQ' ? 'NONE' : 'MCQ'})} 
-                    className={cn("px-5 py-2 rounded-lg text-sm font-bold transition-all", selectedQuestion.optionsType === 'MCQ' ? "bg-primary-500 text-white shadow-[0_5px_15px_rgba(99,102,241,0.4)]" : "text-surface-400 hover:text-white")}
+                    className={cn("px-3 py-1 rounded-md text-xs font-bold transition-all", selectedQuestion.optionsType === 'MCQ' ? "bg-primary-500 text-white shadow-sm" : "text-surface-400 hover:text-white")}
                   >
-                    + MCQ/MSQ
+                    MCQ/MSQ
                   </button>
                   <button 
                     onClick={() => updateQuestion({optionsType: selectedQuestion.optionsType === 'NAT' ? 'NONE' : 'NAT'})} 
-                    className={cn("px-5 py-2 rounded-lg text-sm font-bold transition-all", selectedQuestion.optionsType === 'NAT' ? "bg-primary-500 text-white shadow-[0_5px_15px_rgba(99,102,241,0.4)]" : "text-surface-400 hover:text-white")}
+                    className={cn("px-3 py-1 rounded-md text-xs font-bold transition-all", selectedQuestion.optionsType === 'NAT' ? "bg-primary-500 text-white shadow-sm" : "text-surface-400 hover:text-white")}
                   >
-                    + NAT
+                    NAT
                   </button>
                 </div>
               </div>
 
               <AnimatePresence mode="wait">
                 {selectedQuestion.optionsType === 'MCQ' && (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex gap-4 md:gap-6 items-center justify-center py-6">
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex gap-3 md:gap-4 items-center justify-center py-4">
                     {['A', 'B', 'C', 'D'].map(opt => {
                       const isSelected = selectedQuestion.selectedOptions?.includes(opt);
                       return (
@@ -1456,9 +1453,9 @@ export const ReviewTest: React.FC = () => {
                           key={opt}
                           onClick={() => toggleOption(opt)}
                           className={cn(
-                            "w-16 h-16 md:w-20 md:h-20 rounded-full text-2xl font-black flex items-center justify-center transition-all border-4", 
+                            "w-14 h-14 md:w-16 md:h-16 rounded-full text-xl font-black flex items-center justify-center transition-all border-[3px]", 
                             isSelected 
-                              ? "bg-primary-500 border-primary-400 text-white shadow-[0_0_30px_rgba(99,102,241,0.6)] scale-110" 
+                              ? "bg-primary-500 border-primary-400 text-white shadow-[0_0_25px_rgba(99,102,241,0.5)] scale-110" 
                               : "bg-surface-800 border-surface-600 text-surface-400 hover:border-surface-400 hover:text-white"
                           )}
                         >
@@ -1470,53 +1467,52 @@ export const ReviewTest: React.FC = () => {
                 )}
                 
                 {selectedQuestion.optionsType === 'NAT' && (
-                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex justify-center py-6">
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex justify-center py-4">
                     <Input 
                       type="number" 
                       placeholder="Enter numerical answer..." 
                       value={selectedQuestion.numericalAnswer ?? ''} 
                       onChange={e => updateQuestion({numericalAnswer: e.target.value ? Number(e.target.value) : undefined})} 
-                      className="w-full max-w-xs text-center text-3xl font-black h-20 rounded-2xl bg-surface-900/80 border-surface-600 shadow-inner placeholder:text-surface-600 placeholder:text-xl placeholder:font-medium focus:ring-primary-500 focus:border-primary-500" 
+                      className="w-full max-w-xs text-center text-2xl font-black h-16 rounded-xl bg-surface-900/80 border-surface-600 shadow-inner placeholder:text-surface-600 placeholder:text-lg placeholder:font-medium focus:ring-primary-500 focus:border-primary-500" 
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Custom Blocks (Seamless Editor) */}
-            <div className="space-y-6">
+            {/* Custom Blocks */}
+            <div className="space-y-3">
               <AnimatePresence>
                 {selectedQuestion.customBlocks?.map(block => (
-                  <motion.div key={block.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-card p-6 md:p-8 rounded-[2rem] border-t border-white/10 space-y-4 relative group shadow-2xl">
-                    <button onClick={() => deleteCustomBlock(block.id)} className="absolute top-6 right-6 p-2 rounded-xl text-surface-500 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all z-10 bg-surface-900/50 backdrop-blur-md"><Trash2 className="w-5 h-5"/></button>
+                  <motion.div key={block.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-surface-900/30 px-4 py-3 rounded-xl border border-white/5 relative group">
+                    <button onClick={() => deleteCustomBlock(block.id)} className="absolute top-3 right-3 p-1.5 rounded-lg text-surface-500 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all z-10"><Trash2 className="w-4 h-4"/></button>
                     
                     <input 
                       value={block.title}
                       onChange={e => updateCustomBlock(block.id, { title: e.target.value })}
-                      className="w-full bg-transparent border-none focus:ring-0 text-xl font-black text-primary-300 placeholder:text-surface-600 p-0 focus:outline-none pr-12"
+                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-black text-primary-300 placeholder:text-surface-600 p-0 focus:outline-none pr-10 mb-2"
                       placeholder="Block Title..."
                     />
-                    <div className="w-full mt-4">
-                      {/* EITHER Image OR Text */}
+                    <div className="w-full">
                       {block.image ? (
                         <ImagePreview file={block.image} onRemove={() => updateCustomBlock(block.id, { image: undefined })} />
                       ) : (
                         <div 
-                          className="w-full bg-surface-900/50 rounded-2xl border border-white/5 shadow-inner flex flex-col focus-within:ring-2 focus-within:ring-purple-500/50 transition-all overflow-hidden relative"
+                          className="w-full bg-surface-900/50 rounded-xl border border-white/5 flex flex-col focus-within:ring-2 focus-within:ring-purple-500/50 transition-all overflow-hidden relative"
                         >
                           <textarea 
                             value={block.content || ''}
                             onChange={e => updateCustomBlock(block.id, { content: e.target.value })}
-                            className="w-full bg-transparent border-none text-surface-100 placeholder:text-surface-600 resize-none focus:outline-none focus:ring-0 font-medium leading-relaxed p-5 h-auto min-h-[140px]"
+                            className="w-full bg-transparent border-none text-surface-100 placeholder:text-surface-600 resize-none focus:outline-none focus:ring-0 font-medium leading-relaxed p-4 h-auto min-h-[100px] text-sm"
                             rows={(block.content || '').split('\n').length || 1}
                             placeholder="Type text, or Ctrl+V / Click the button to paste an image instead..."
                           />
                           {!block.content && (
                             <button 
                               onClick={() => handleOneClickPaste(block.id)}
-                              className="absolute right-5 bottom-5 px-5 py-2.5 bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white rounded-xl text-sm font-bold flex items-center gap-2 border border-white/5 shadow-md transition-all z-10"
+                              className="absolute right-3 bottom-3 px-3 py-1.5 bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1.5 border border-white/5 shadow-md transition-all z-10"
                             >
-                              <ImageIcon className="w-4 h-4" /> Click to Paste Image
+                              <ImageIcon className="w-3.5 h-3.5" /> Paste Image
                             </button>
                           )}
                         </div>
@@ -1525,35 +1521,35 @@ export const ReviewTest: React.FC = () => {
                   </motion.div>
                 ))}
               </AnimatePresence>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button onClick={() => addCustomBlock('Detailed Solution')} className="w-full h-16 bg-surface-800/30 hover:bg-surface-800/50 border-dashed border-2 border-surface-600 hover:border-emerald-500/50 text-surface-300 hover:text-emerald-400 rounded-3xl flex items-center justify-center gap-3 transition-all font-bold text-lg shadow-sm">
-                  <Plus className="w-6 h-6" /> Add Solution Block
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={() => addCustomBlock('Detailed Solution')} className="w-full h-11 bg-surface-800/30 hover:bg-surface-800/50 border-dashed border border-surface-600 hover:border-emerald-500/50 text-surface-300 hover:text-emerald-400 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-sm">
+                  <Plus className="w-4 h-4" /> Solution
                 </Button>
-                <Button onClick={() => addCustomBlock('New Block')} className="w-full h-16 bg-surface-800/30 hover:bg-surface-800/50 border-dashed border-2 border-surface-600 hover:border-purple-500/50 text-surface-300 hover:text-purple-400 rounded-3xl flex items-center justify-center gap-3 transition-all font-bold text-lg shadow-sm">
-                  <Plus className="w-6 h-6" /> Add Custom Block
+                <Button onClick={() => addCustomBlock('New Block')} className="w-full h-11 bg-surface-800/30 hover:bg-surface-800/50 border-dashed border border-surface-600 hover:border-purple-500/50 text-surface-300 hover:text-purple-400 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-sm">
+                  <Plus className="w-4 h-4" /> Block
                 </Button>
               </div>
             </div>
 
-            {/* Question Reference Link */}
-            <div className="glass-card p-5 md:p-6 rounded-[2rem] border-t border-white/10 shadow-2xl mt-8 space-y-4">
-              <h3 className="text-xs font-bold text-surface-400 uppercase tracking-widest flex items-center gap-2"><ExternalLink className="w-4 h-4"/> Reference Link</h3>
-              <div className="flex items-center gap-3">
+            {/* Reference Link — Compact */}
+            <div className="bg-surface-900/30 px-4 py-3 rounded-xl border border-white/5">
+              <h3 className="text-[10px] font-bold text-surface-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><ExternalLink className="w-3 h-3"/> Reference Link</h3>
+              <div className="flex items-center gap-2">
                 <Input 
                   value={selectedQuestion.link || ''}
                   onChange={(e) => updateQuestion({ link: e.target.value })}
                   placeholder="Paste URL for reference..."
-                  className="flex-1 bg-surface-900/50 border-white/5 focus:border-primary-500/50 h-12"
+                  className="flex-1 bg-surface-900/50 border-white/5 focus:border-primary-500/50 h-9 text-sm"
                 />
                 {selectedQuestion.link && (
                   <a 
                     href={selectedQuestion.link} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="h-12 w-12 bg-surface-800 hover:bg-surface-700 text-primary-400 rounded-xl transition-colors shadow-inner flex items-center justify-center shrink-0 border border-white/5"
+                    className="h-9 w-9 bg-surface-800 hover:bg-surface-700 text-primary-400 rounded-lg transition-colors flex items-center justify-center shrink-0 border border-white/5"
                     title="Open Link"
                   >
-                    <ExternalLink className="w-5 h-5" />
+                    <ExternalLink className="w-4 h-4" />
                   </a>
                 )}
               </div>
