@@ -16,7 +16,7 @@ export const AddTest: React.FC = () => {
   // Form State
   const [coachingId, setCoachingId] = useState<number | ''>('');
   const [testTypeId, setTestTypeId] = useState<number | ''>('');
-  const [subjectId, setSubjectId] = useState<number | 'none'>('');
+  const [subjectId, setSubjectId] = useState<number | 'none'>('none');
   const [newSubject, setNewSubject] = useState('');
   const [topicId, setTopicId] = useState<number | ''>('');
   const [newTopic, setNewTopic] = useState('');

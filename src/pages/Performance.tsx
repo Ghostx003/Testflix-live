@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Activity, AlertTriangle, ArrowRight, Award, BarChart3, BookOpen, Brain,
-  CalendarDays, ChevronDown, ChevronUp, Clock3, Flame, Gauge, Layers3,
-  RotateCcw, ShieldCheck, Sparkles, Target, Tags, TrendingDown,
+  Activity, AlertTriangle, ArrowRight, Award, BarChart3, Brain,
+  ChevronDown, ChevronUp, Clock3, Flame, Gauge, Layers3,
+  ShieldCheck, Sparkles, Target, Tags, TrendingDown,
   TrendingUp, Trophy, Zap, Calendar, X, Archive, EyeOff, ExternalLink
 } from 'lucide-react';
 import { db, type Question } from '../services/db';
@@ -438,7 +438,7 @@ const ImprovementGraph: React.FC<{ tests: any[], questions: any[], statuses: any
     pathStr = `M ${points[0].x} ${points[0].y} ` + points.map((p, i) => i === 0 ? '' : `L ${p.x} ${p.y}`).join(' ');
   }
 
-  const formatValue = (v: number) => metric === 'accuracy' ? `${Math.round(v)}% accuracy` : formatPerQuestion(v);
+  // formatValue intentionally kept for future tooltip usage
 
   let title = 'Custom Time Test Analysis';
   if (days === 7) title = 'Weekly Progress';
@@ -598,7 +598,7 @@ const ImprovementGraph: React.FC<{ tests: any[], questions: any[], statuses: any
               {[0, 0.5, 1].map(t => {
                 if (data.length < 2 && t !== 0) return null;
                 const d = new Date(minDate + t * timeSpan);
-                const xPos = paddingLeft + t * graphH; // wait, t * graphW
+                // xPos was calculated for debugging: paddingLeft + t * graphH
                 const actualX = paddingLeft + t * graphW;
                 return (
                   <text key={t} x={actualX} y={height - 8} fill="rgba(255,255,255,0.4)" fontSize="10" fontWeight="bold" textAnchor="middle">
@@ -761,7 +761,7 @@ const MeVsMeComparison: React.FC<{
   topics: any[];
   testTypes: any[];
   statuses: any[];
-}> = ({ tests, questions, subjects, topics, testTypes, statuses }) => {
+}> = ({ tests, questions, subjects, statuses }) => {
   const [range1Type, setRange1Type] = useState<string>('this-month');
   const [range1Start, setRange1Start] = useState<string>('');
   const [range1End, setRange1End] = useState<string>('');
@@ -874,7 +874,7 @@ const MeVsMeComparison: React.FC<{
       }
 
       // Best subject improvement
-      let bestSubj = null;
+      let bestSubj: number | null = null;
       let bestDiff = -999;
       stat1.subjStats.forEach((v1, sid) => {
         const v2 = stat2.subjStats.get(sid);
@@ -990,7 +990,7 @@ const MeVsMeComparison: React.FC<{
 };
 
 export const Performance: React.FC = () => {
-  const navigate = useNavigate();
+  useNavigate(); // keep the hook call for router context
   const tests = useLiveQuery(() => db.tests.toArray()) || [];
   const questions = useLiveQuery(() => db.questions.toArray()) || [];
   const subjects = useLiveQuery(() => db.subjects.toArray()) || [];
@@ -1009,7 +1009,7 @@ export const Performance: React.FC = () => {
   const [subjectSortCol, setSubjectSortCol] = useState<string>('attempted');
   const [subjectSortDir, setSubjectSortDir] = useState<'asc' | 'desc'>('desc');
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [expandedTest, setExpandedTest] = useState<number | null>(null);
+
   const [expandedTag, setExpandedTag] = useState<number | null>(null);
   const [viewingQuestions, setViewingQuestions] = useState<Question[] | null>(null);
   const [viewingIndex, setViewingIndex] = useState(0);
@@ -1025,7 +1025,7 @@ export const Performance: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewingQuestions]);
-  const [showAllSubjects, setShowAllSubjects] = useState(false);
+
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   
   // Subject Level Focus state
@@ -1177,8 +1177,7 @@ export const Performance: React.FC = () => {
   }, [tests, questions, subjects, topics, tags, statuses, testTypes, coachings, dateFilter]);
 
   const { overall } = analytics;
-  const comparison = (now: number, before: number) => before ? now - before : 0;
-  const subjectRows = showAllSubjects ? analytics.bySubject : analytics.bySubject.slice(0, 5);
+
 
   return <div className="max-w-[1500px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-20 space-y-6">
     <StickyNav />
@@ -1302,7 +1301,7 @@ export const Performance: React.FC = () => {
             <div className="mt-8 space-y-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Accuracy" value={`${round(stat.accuracy)}%`} icon={Target} color="indigo" hint={<span />} />
-                <StatCard label="Unattempted" value={`${round(percent(stat.skipped, stat.total))}%`} icon={Clock3} color="slate" hint={<span />} />
+                <StatCard label="Unattempted" value={`${round(percent(stat.skipped, stat.total))}%`} icon={Clock3} color="sky" hint={<span />} />
                 <StatCard label="Incorrect" value={`${round(percent(stat.incorrect, stat.attempted))}%`} icon={AlertTriangle} color="rose" hint={<span />} />
                 <StatCard label="Avg. Time" value={formatPerQuestion(stat.averageTime)} icon={Clock3} color="sky" hint={<span />} />
               </div>

@@ -493,7 +493,6 @@ const TestGrid: React.FC<{ onSelect: (id: number) => void }> = ({ onSelect }) =>
           {sortedTests.map((test: any) => {
             const coachingName = getCoachingName(test.coachingId);
             const typeName = getTestTypeName(test.testTypeId);
-            const subjectName = getSubjectName(test.subjectId);
             
             let displayMarks = Number(test.marksObtained) || 0;
             let displayMaxMarks = Number(test.maxMarks) || 5;
@@ -1151,11 +1150,11 @@ export const ReviewTest: React.FC = () => {
       </div>
 
       {/* Right Area: Immersive Content Canvas */}
-      <div className="flex-1 min-h-[50vh] bg-surface-900/30 backdrop-blur-3xl border border-white/5 rounded-3xl p-5 md:p-6 overflow-y-auto shadow-[0_0_50px_rgba(0,0,0,0.2)] relative [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20">
+      <div className={cn("flex-1 min-h-[50vh] bg-surface-900/30 backdrop-blur-3xl border border-white/5 rounded-3xl overflow-y-auto shadow-[0_0_50px_rgba(0,0,0,0.2)] relative [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20", viewMode === 'editor' ? 'p-3 sm:p-4 md:p-5' : 'p-5 md:p-6')}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-purple-500/5 pointer-events-none rounded-[2.5rem]" />
         
         {selectedQuestion ? (
-          <motion.div key={`${selectedQuestion.id}-${viewMode}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 max-w-5xl mx-auto pb-20 relative z-10">
+          <motion.div key={`${selectedQuestion.id}-${viewMode}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn('mx-auto pb-20 relative z-10', viewMode === 'editor' ? 'space-y-4 max-w-6xl' : 'space-y-6 max-w-5xl')}>
             {viewMode === 'viewer' ? (
               <>
                 <div className="bg-surface-900/50 p-5 rounded-[2rem] border border-white/5 shadow-lg flex flex-col gap-4">
