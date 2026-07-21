@@ -684,7 +684,7 @@ const ImprovementGraph: React.FC<{ tests: any[], questions: any[], statuses: any
 
 const StickyNav = () => {
   return (
-    <div className="sticky top-0 z-40 bg-surface-950/80 backdrop-blur-xl border-b border-white/10 py-3 mb-6 flex gap-3 overflow-x-auto shadow-2xl [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
+    <div className="sticky top-4 z-40 bg-surface-950/80 backdrop-blur-xl border border-white/10 rounded-full py-1.5 px-2 mb-8 mx-auto w-fit max-w-[95vw] justify-center flex gap-1.5 overflow-x-auto shadow-2xl [&::-webkit-scrollbar]:hidden">
       {[
         { id: 'per-test', label: 'Per-test analysis' },
         { id: 'deep-dive', label: 'Deep Dive' },
@@ -695,7 +695,7 @@ const StickyNav = () => {
         { id: 'tag-analysis', label: 'Tag analysis' },
         { id: 'me-vs-me', label: 'Self-Performance Comparison' }
       ].map(link => (
-        <a key={link.id} href={`#${link.id}`} className="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold text-surface-400 bg-surface-800/50 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all shadow-sm">
+        <a key={link.id} href={`#${link.id}`} className="whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] font-bold text-surface-400 bg-surface-800/50 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all shadow-sm">
           {link.label}
         </a>
       ))}
@@ -752,10 +752,14 @@ const MeVsMeComparison: React.FC<{
       const end = new Date(now.getFullYear(), now.getMonth(), 0).getTime() + 86400000 - 1;
       return { start, end };
     }
-    if (type.startsWith('month:')) {
-      const [, yyyy, mm] = type.split(/[:-]/);
-      const start = new Date(Number(yyyy), Number(mm) - 1, 1).getTime();
-      const end = new Date(Number(yyyy), Number(mm), 0).getTime() + 86400000 - 1;
+    if (type === 'this-year') {
+      const start = new Date(now.getFullYear(), 0, 1).getTime();
+      const end = new Date(now.getFullYear() + 1, 0, 0).getTime() + 86400000 - 1;
+      return { start, end };
+    }
+    if (type === 'last-year') {
+      const start = new Date(now.getFullYear() - 1, 0, 1).getTime();
+      const end = new Date(now.getFullYear(), 0, 0).getTime() + 86400000 - 1;
       return { start, end };
     }
     if (type === 'custom' && startStr && endStr) {
@@ -817,18 +821,6 @@ const MeVsMeComparison: React.FC<{
   const stat1 = computeStats(range1Type, range1Start, range1End);
   const stat2 = computeStats(range2Type, range2Start, range2End);
 
-  const monthOptions = useMemo(() => {
-    const opts = [];
-    const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const val = `month:${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('default', { month: 'long', year: 'numeric' });
-      opts.push({ val, label });
-    }
-    return opts;
-  }, []);
-
   const renderDropdown = (val: string, setVal: (v: string) => void) => (
     <select
       value={val}
@@ -836,18 +828,23 @@ const MeVsMeComparison: React.FC<{
       className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none shadow-sm cursor-pointer transition-all w-full"
       style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23A1A1AA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem top 50%', backgroundSize: '0.65rem auto', paddingRight: '2.5rem' }}
     >
-      <optgroup label="Relative Ranges">
-        <option value="today">Today</option>
-        <option value="yesterday">Yesterday</option>
-        <option value="this-week">This Week</option>
-        <option value="last-week">Last Week</option>
-        <option value="this-month">This Month</option>
-        <option value="last-month">Last Month</option>
+      <optgroup label="Daily" className="bg-surface-900 text-white font-bold">
+        <option value="today" className="bg-surface-900 text-white">Today</option>
+        <option value="yesterday" className="bg-surface-900 text-white">Yesterday</option>
       </optgroup>
-      <optgroup label="Specific Months">
-        {monthOptions.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+      <optgroup label="Weekly" className="bg-surface-900 text-white font-bold">
+        <option value="this-week" className="bg-surface-900 text-white">This Week</option>
+        <option value="last-week" className="bg-surface-900 text-white">Last Week</option>
       </optgroup>
-      <option value="custom">Custom Date Range</option>
+      <optgroup label="Monthly" className="bg-surface-900 text-white font-bold">
+        <option value="this-month" className="bg-surface-900 text-white">This Month</option>
+        <option value="last-month" className="bg-surface-900 text-white">Last Month</option>
+      </optgroup>
+      <optgroup label="Yearly" className="bg-surface-900 text-white font-bold">
+        <option value="this-year" className="bg-surface-900 text-white">This Year</option>
+        <option value="last-year" className="bg-surface-900 text-white">Last Year</option>
+      </optgroup>
+      <option value="custom" className="bg-surface-900 text-emerald-400 font-bold">Custom Date Range...</option>
     </select>
   );
 
@@ -933,8 +930,8 @@ const MeVsMeComparison: React.FC<{
           className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-surface-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 hover:border-white/20 transition-all cursor-pointer shadow-inner"
           value={subjFilter} onChange={e => { setSubjFilter(e.target.value ? Number(e.target.value) : ''); setTopicFilter(''); }}
         >
-          <option value="">All Subjects</option>
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          <option value="" className="bg-surface-900 text-white">All Subjects</option>
+          {subjects.map(s => <option key={s.id} value={s.id} className="bg-surface-900 text-white">{s.name}</option>)}
         </select>
 
         {subjFilter !== '' && (
@@ -942,8 +939,8 @@ const MeVsMeComparison: React.FC<{
             className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-surface-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 hover:border-white/20 transition-all cursor-pointer shadow-inner max-w-[200px]"
             value={topicFilter} onChange={e => setTopicFilter(e.target.value ? Number(e.target.value) : '')}
           >
-            <option value="">All Topics</option>
-            {topics.filter(t => t.subjectId === subjFilter).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            <option value="" className="bg-surface-900 text-white">All Topics</option>
+            {topics.filter(t => t.subjectId === subjFilter).map(t => <option key={t.id} value={t.id} className="bg-surface-900 text-white">{t.name}</option>)}
           </select>
         )}
 
@@ -951,8 +948,8 @@ const MeVsMeComparison: React.FC<{
           className="bg-surface-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-surface-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 hover:border-white/20 transition-all cursor-pointer shadow-inner"
           value={testTypeFilter} onChange={e => setTestTypeFilter(e.target.value ? Number(e.target.value) : '')}
         >
-          <option value="">All Test Types</option>
-          {testTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          <option value="" className="bg-surface-900 text-white">All Test Types</option>
+          {testTypes.map(t => <option key={t.id} value={t.id} className="bg-surface-900 text-white">{t.name}</option>)}
         </select>
       </div>
 
