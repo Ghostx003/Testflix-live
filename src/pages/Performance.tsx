@@ -80,19 +80,27 @@ const Trend = ({ value, compact = false }: { value: number; compact?: boolean })
 
 const StatCard = ({ label, value, hint, icon: Icon, color = 'indigo' }: { label: string; value: string; hint: React.ReactNode; icon: React.ElementType; color?: 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky' }) => {
   const colors = {
-    indigo: 'bg-primary-500/12 text-primary-300 border-primary-500/20',
-    emerald: 'bg-emerald-500/12 text-emerald-300 border-emerald-500/20',
-    amber: 'bg-amber-500/12 text-amber-300 border-amber-500/20',
-    rose: 'bg-rose-500/12 text-rose-300 border-rose-500/20',
-    sky: 'bg-sky-500/12 text-sky-300 border-sky-500/20'
+    indigo: 'bg-primary-500/15 text-primary-300 border-primary-500/30 shadow-[0_0_20px_rgba(99,102,241,0.2)]',
+    emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]',
+    amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)]',
+    rose: 'bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.2)]',
+    sky: 'bg-sky-500/15 text-sky-300 border-sky-500/30 shadow-[0_0_20px_rgba(14,165,233,0.2)]'
   };
-  return <div className="glass-card rounded-2xl p-4 sm:p-5 border border-white/8 min-w-0">
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0"><p className="text-xs font-bold uppercase tracking-widest text-surface-500 truncate">{label}</p><p className="mt-2 text-2xl sm:text-3xl font-black text-white tracking-tight">{value}</p></div>
-      <div className={cn('p-2.5 rounded-xl border shrink-0', colors[color])}><Icon className="w-5 h-5" /></div>
+  return (
+    <div className="relative overflow-hidden bg-gradient-to-br from-surface-900/90 via-surface-900/60 to-surface-950/90 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white/10 min-w-0 transition-all duration-300 hover:border-white/20 hover:shadow-xl hover:-translate-y-0.5 group">
+      <div className="pointer-events-none absolute -top-12 -right-12 w-24 h-24 bg-white/[0.03] rounded-full blur-xl group-hover:bg-white/[0.06] transition-colors" />
+      <div className="flex items-start justify-between gap-3 relative z-10">
+        <div className="min-w-0">
+          <p className="text-[11px] font-black uppercase tracking-widest text-surface-400 group-hover:text-surface-300 transition-colors truncate">{label}</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">{value}</p>
+        </div>
+        <div className={cn('p-2.5 rounded-xl border shrink-0 transition-transform duration-300 group-hover:scale-110', colors[color])}>
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+      <div className="mt-3 text-xs text-surface-400 font-medium min-h-4 relative z-10">{hint}</div>
     </div>
-    <div className="mt-3 text-xs text-surface-400 min-h-4">{hint}</div>
-  </div>;
+  );
 };
 
 const ProgressBar = ({ value, color = 'bg-primary-400', className }: { value: number; color?: string; className?: string }) => <div className={cn('h-2 rounded-full overflow-hidden bg-white/6', className)}><motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, Math.max(0, value))}%` }} transition={{ duration: .55 }} className={cn('h-full rounded-full', color)} /></div>;
@@ -684,18 +692,23 @@ const ImprovementGraph: React.FC<{ tests: any[], questions: any[], statuses: any
 
 const StickyNav = () => {
   return (
-    <div className="sticky top-4 z-40 bg-surface-950/80 backdrop-blur-xl border border-white/10 rounded-full py-1.5 px-2 mb-8 mx-auto w-fit max-w-[95vw] justify-center flex gap-1.5 overflow-x-auto shadow-2xl [&::-webkit-scrollbar]:hidden">
+    <div className="sticky top-4 z-40 bg-surface-950/85 backdrop-blur-2xl border border-white/15 rounded-full p-2 mb-8 mx-auto w-fit max-w-[95vw] justify-center flex gap-1.5 overflow-x-auto shadow-[0_10px_35px_rgba(0,0,0,0.8)] [&::-webkit-scrollbar]:hidden">
       {[
-        { id: 'per-test', label: 'Per-test analysis' },
-        { id: 'deep-dive', label: 'Deep Dive' },
+        { id: 'strength-detector', label: 'Strength & Weakness' },
+        { id: 'me-vs-me', label: 'Self-Comparison' },
+        { id: 'deep-dive', label: 'Deep Dive & Trends' },
         { id: 'test-category', label: 'Test Category Analysis' },
-        { id: 'strength-detector', label: 'Strength detector' },
+        { id: 'per-test', label: 'Per-test analysis' },
+        { id: 'subject-focus', label: 'Subject & Topic Analysis' },
         { id: 'subject-leaderboard', label: 'Subject leaderboard' },
         { id: 'topic-precision', label: 'Topic analysis' },
-        { id: 'tag-analysis', label: 'Tag analysis' },
-        { id: 'me-vs-me', label: 'Self-Performance Comparison' }
+        { id: 'tag-analysis', label: 'Tag analysis' }
       ].map(link => (
-        <a key={link.id} href={`#${link.id}`} className="whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] font-bold text-surface-400 bg-surface-800/50 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all shadow-sm">
+        <a 
+          key={link.id} 
+          href={`#${link.id}`} 
+          className="whitespace-nowrap px-4 py-2 rounded-full text-xs font-black text-surface-300 bg-surface-900/60 hover:text-white hover:bg-white/10 border border-white/8 hover:border-primary-500/40 transition-all duration-200 shadow-sm active:scale-95 flex items-center gap-1.5"
+        >
           {link.label}
         </a>
       ))}
@@ -910,14 +923,17 @@ const MeVsMeComparison: React.FC<{
   };
 
   return (
-    <section id="me-vs-me" className="mt-12 relative overflow-hidden scroll-mt-24 pb-20">
+    <section id="me-vs-me" className="relative overflow-hidden bg-gradient-to-b from-surface-900/90 via-surface-900/70 to-surface-950/90 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl scroll-mt-24 my-6">
+      <div className="pointer-events-none absolute -top-32 -left-32 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
       {/* Decorative Header */}
-      <div className="flex flex-col gap-2 mb-6">
-        <div className="flex items-center gap-2 text-indigo-400 text-xs font-black uppercase tracking-widest">
-          <Activity className="w-4 h-4" /> Performance Analytics
+      <div className="flex flex-col gap-1.5 mb-6 relative z-10">
+        <div className="inline-flex items-center gap-2 text-indigo-400 text-xs font-black uppercase tracking-widest">
+          <Activity className="w-4 h-4 animate-pulse text-indigo-400" /> Performance Analytics
         </div>
-        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">ME <span className="text-surface-600">VS</span> ME</h2>
-        <p className="text-surface-400 text-sm md:text-base font-medium">Hyper-analyze your progress across custom timeframes.</p>
+        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md">
+          ME <span className="bg-gradient-to-r from-indigo-400 to-pink-500 bg-clip-text text-transparent">VS</span> ME
+        </h2>
+        <p className="text-surface-300 text-sm md:text-base font-medium">Hyper-analyze your progress across custom timeframes.</p>
       </div>
 
       {/* Global Filters */}
@@ -1195,10 +1211,29 @@ export const Performance: React.FC = () => {
     <StickyNav />
     <DateFilterModal isOpen={showDateFilter} onClose={() => setShowDateFilter(false)} currentFilter={dateFilter} onApply={setDateFilter} tests={tests} />
     
-    <section className="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
-      <div><div className="flex items-center gap-2 text-primary-300 text-sm font-bold"><Activity className="w-4 h-4" /> PERFORMANCE INTELLIGENCE</div><h1 className="mt-2 text-3xl sm:text-4xl font-black text-white tracking-tight">See what moves your score.</h1><p className="mt-2 text-surface-400 max-w-2xl">A focused view of your test habits, speed, accuracy, and the exact concepts that need attention.</p></div>
-      <div className="flex flex-col items-end relative self-start xl:self-auto">
-        <button onClick={() => setShowDateFilter(true)} className={cn("flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all border shadow-lg", showDateFilter ? "bg-primary-500 text-white border-primary-500/50" : "bg-surface-800/80 border-white/10 text-white hover:bg-surface-700/80 hover:border-white/20")}>
+    <section className="flex flex-col xl:flex-row xl:items-end justify-between gap-5 relative overflow-hidden bg-gradient-to-r from-primary-500/10 via-purple-500/5 to-transparent p-6 rounded-3xl border border-white/10 shadow-2xl">
+      <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 bg-primary-500/15 rounded-full blur-3xl" />
+      <div className="relative z-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/15 border border-primary-500/30 text-primary-300 text-xs font-black tracking-widest uppercase shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+          <Activity className="w-3.5 h-3.5 animate-pulse text-primary-400" /> PERFORMANCE INTELLIGENCE
+        </div>
+        <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight drop-shadow-md">
+          See what moves your score.
+        </h1>
+        <p className="mt-2 text-surface-300 max-w-2xl text-sm sm:text-base font-medium leading-relaxed">
+          A focused view of your test habits, speed, accuracy, and the exact concepts that need attention.
+        </p>
+      </div>
+      <div className="flex flex-col items-end relative self-start xl:self-auto z-10">
+        <button 
+          onClick={() => setShowDateFilter(true)} 
+          className={cn(
+            "flex items-center gap-2 px-5 py-3 text-sm font-black rounded-2xl transition-all duration-200 border shadow-xl cursor-pointer active:scale-95", 
+            showDateFilter 
+              ? "bg-primary-500 text-white border-primary-400 shadow-primary-500/30" 
+              : "bg-surface-900/90 border-white/15 text-white hover:bg-surface-800 hover:border-white/30 hover:shadow-primary-500/10"
+          )}
+        >
           <Calendar className="w-4 h-4 text-primary-400" /> {dateFilter.label} <ChevronDown className="w-4 h-4 opacity-70" />
         </button>
       </div>
@@ -1214,6 +1249,218 @@ export const Performance: React.FC = () => {
         <StatCard label="Avg. time" value={formatPerQuestion(overall.averageTime)} icon={Clock3} color="rose" hint={<span>Across questions you attempted</span>} />
       </section>
 
+      {/* 1. STRENGTH DETECTOR & WEAKNESS RADAR */}
+      <section id="strength-detector" className="grid grid-cols-1 lg:grid-cols-2 gap-6 scroll-mt-24">
+        {/* Strength Detector Card */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950/30 via-surface-900/90 to-surface-950/90 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 border border-emerald-500/20 shadow-[0_10px_30px_rgba(16,185,129,0.08)] transition-all hover:border-emerald-500/40">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl" />
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-emerald-400/90">Strength detector</p>
+              <h2 className="mt-0.5 text-xl font-black text-white tracking-tight">Use your advantages</h2>
+            </div>
+          </div>
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 relative z-10">
+            {[
+              { icon: Target, label: 'Highest accuracy topic', value: analytics.highestAccuracyTopic?.name || '—', note: analytics.highestAccuracyTopic ? `${round(analytics.highestAccuracyTopic.accuracy)}% accuracy` : 'More attempts needed' },
+              { icon: Award, label: 'Best subject', value: analytics.bestSubject?.name || '—', note: analytics.bestSubject ? `${round(analytics.bestSubject.accuracy)}% accuracy` : 'More attempts needed' },
+              { icon: Zap, label: 'Fastest subject', value: analytics.fastestSubject?.name || '—', note: analytics.fastestSubject ? formatPerQuestion(analytics.fastestSubject.averageTime) : 'Timed data needed' },
+              { icon: ShieldCheck, label: 'Least negative', value: analytics.leastNegative?.name || '—', note: analytics.leastNegative ? `${round(percent(analytics.leastNegative.incorrect, analytics.leastNegative.attempted))}% incorrect` : 'More attempts needed' },
+              { icon: Activity, label: 'Most consistent', value: analytics.consistency ? `${analytics.consistency}% rhythm` : '—', note: 'Your weekly accuracy stability' }
+            ].map(item => (
+              <div key={item.label} className="p-4 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/15 hover:border-emerald-500/30 hover:bg-emerald-500/[0.1] transition-all flex flex-col justify-between min-h-[115px] group">
+                <item.icon className="w-4 h-4 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+                <p className="mt-3 text-[10px] uppercase tracking-wider text-surface-400 font-bold leading-tight group-hover:text-surface-300 transition-colors">{item.label}</p>
+                <p className="mt-1 font-black text-white truncate text-sm sm:text-base group-hover:text-emerald-300 transition-colors">{item.value}</p>
+                <p className="mt-1 text-[10px] text-emerald-400/90 font-semibold truncate">{item.note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Weakness Radar Card */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-rose-950/30 via-surface-900/90 to-surface-950/90 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 border border-rose-500/20 shadow-[0_10px_30px_rgba(244,63,94,0.08)] transition-all hover:border-rose-500/40">
+          <div className="pointer-events-none absolute -top-20 -right-20 w-44 h-44 bg-rose-500/10 rounded-full blur-3xl" />
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.25)]">
+              <Flame className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-rose-400/90">Weakness radar</p>
+              <h2 className="mt-0.5 text-xl font-black text-white tracking-tight">Protect your score</h2>
+            </div>
+          </div>
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 relative z-10">
+            {[
+              { title: "Draining topics", icon: AlertTriangle, iconColor: "text-rose-400", bgColor: "bg-rose-500/[0.06]", borderColor: "border-rose-500/15 hover:border-rose-500/30", noteColor: "text-rose-400", items: analytics.weakTopics.map(t => ({ name: t.name, detail: `${t.incorrect} mistakes` })) },
+              { title: "Time sinks (>3m)", icon: Clock3, iconColor: "text-amber-400", bgColor: "bg-amber-500/[0.06]", borderColor: "border-amber-500/15 hover:border-amber-500/30", noteColor: "text-amber-400", items: analytics.slowChapters.map(s => ({ name: s.name, detail: formatPerQuestion(s.averageTime) })) },
+              { title: "Memory decay (21d+)", icon: Archive, iconColor: "text-surface-400", bgColor: "bg-white/[0.05]", borderColor: "border-white/10 hover:border-white/20", noteColor: "text-surface-300", items: analytics.forgotten.map(t => ({ name: t.name, detail: "Needs revision" })) },
+              { title: "Blind spots", icon: EyeOff, iconColor: "text-indigo-400", bgColor: "bg-indigo-500/[0.06]", borderColor: "border-indigo-500/15 hover:border-indigo-500/30", noteColor: "text-indigo-300", items: analytics.neverPracticed.map(t => ({ name: t.name, detail: "Unattempted" })) },
+              { title: "Worst subject", icon: TrendingDown, iconColor: "text-rose-400", bgColor: "bg-rose-500/[0.06]", borderColor: "border-rose-500/15 hover:border-rose-500/30", noteColor: "text-rose-400", items: analytics.worstSubject ? [{ name: analytics.worstSubject.name, detail: `${round(analytics.worstSubject.accuracy)}% accuracy` }] : [] },
+              { title: "Least accurate topic", icon: Target, iconColor: "text-orange-400", bgColor: "bg-orange-500/[0.06]", borderColor: "border-orange-500/15 hover:border-orange-500/30", noteColor: "text-orange-400", items: analytics.leastAccurateTopic ? [{ name: analytics.leastAccurateTopic.name, detail: `${round(analytics.leastAccurateTopic.accuracy)}% accuracy` }] : [] }
+            ].map(section => (
+              <div key={section.title} className={cn("p-4 rounded-2xl border flex flex-col min-h-[145px] transition-all group", section.bgColor, section.borderColor)}>
+                <div className="flex items-center gap-2 mb-3">
+                  <section.icon className={cn("w-4 h-4 shrink-0 group-hover:scale-110 transition-transform", section.iconColor)} />
+                  <p className="text-[10px] uppercase tracking-wider text-surface-400 font-bold leading-tight group-hover:text-surface-300 transition-colors">{section.title}</p>
+                </div>
+                {section.items.length ? (
+                  <div className="space-y-2 flex-1">
+                    {section.items.slice(0, 4).map(item => (
+                      <div key={item.name} className="flex justify-between items-center gap-2">
+                        <p className="font-bold text-white truncate text-xs sm:text-sm group-hover:text-surface-100 transition-colors">{item.name}</p>
+                        <p className={cn("text-[10px] shrink-0 font-extrabold uppercase", section.noteColor)}>{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <span className="text-xs text-surface-500 font-medium italic">None detected</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. ME VS ME COMPARISON */}
+      <MeVsMeComparison tests={tests} questions={questions} subjects={subjects} topics={topics} testTypes={testTypes} statuses={statuses} />
+
+      {/* 3. DEEP DIVE & TRENDS */}
+      <section id="deep-dive" className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6 mb-6 scroll-mt-24">
+        <ImprovementGraph tests={tests} questions={questions} statuses={statuses} coachings={coachings} testTypes={testTypes} subjects={subjects} topics={topics} onDataChange={setGraphStats} />
+        <div className="flex flex-col gap-6">
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 flex-1"><p className="text-xs font-bold uppercase tracking-widest text-surface-500">Answer pattern</p><h2 className="mt-1 text-xl font-black text-white">Per-question analysis</h2><div className="mt-6 flex items-center gap-6"><div className="w-32 h-32 rounded-full shrink-0" style={{ background: `conic-gradient(#10b981 0 ${percent((graphStats || overall).correct, (graphStats || overall).total)}%, #f43f5e ${percent((graphStats || overall).correct, (graphStats || overall).total)}% ${percent((graphStats || overall).correct + (graphStats || overall).incorrect, (graphStats || overall).total)}%, #64748b ${percent((graphStats || overall).correct + (graphStats || overall).incorrect, (graphStats || overall).total)}% 100%)` }}><div className="m-[13px] h-[102px] rounded-full bg-surface-900 flex flex-col items-center justify-center"><span className="text-2xl font-black text-white">{round((graphStats || overall).accuracy)}%</span><span className="text-[10px] uppercase text-surface-500 font-bold">accuracy</span></div></div><div className="flex-1 space-y-3 text-sm">{[{label:'Correct',value:(graphStats || overall).correct,color:'bg-emerald-400'}, {label:'Incorrect',value:(graphStats || overall).incorrect,color:'bg-rose-400'}, {label:'Left out',value:(graphStats || overall).skipped,color:'bg-slate-500'}].map(item => <div key={item.label}><div className="flex justify-between text-surface-400 mb-1"><span>{item.label}</span><span className="text-white font-bold">{round(percent(item.value, (graphStats || overall).total))}%</span></div><ProgressBar value={percent(item.value, (graphStats || overall).total)} color={item.color} /></div>)}</div></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white/[0.03] p-3"><p className="text-xs text-surface-500">Unattempted</p><p className="mt-1 font-black text-white">{(graphStats || overall).skipped}</p></div><div className="rounded-xl bg-white/[0.03] p-3"><p className="text-xs text-surface-500">Avg. time</p><p className="mt-1 font-black text-white">{formatPerQuestion((graphStats || overall).averageTime)}</p></div></div></div>
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 flex-1 flex flex-col">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-surface-500">Test distribution</p>
+                <h2 className="mt-1 text-xl font-black text-white">Attempts by category</h2>
+              </div>
+              {graphStats?.filterSubjectId && (
+                <div className="flex bg-surface-900/80 p-1 rounded-xl border border-white/10">
+                  <button onClick={() => setDistMode('types')} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold transition-all", distMode === 'types' ? "bg-white/10 text-white" : "text-surface-400 hover:text-white hover:bg-white/5")}>Types</button>
+                  <button onClick={() => setDistMode('topics')} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold transition-all", distMode === 'topics' ? "bg-white/10 text-white" : "text-surface-400 hover:text-white hover:bg-white/5")}>Topics</button>
+                </div>
+              )}
+            </div>
+            
+            {(() => {
+               let activeTests = graphStats?.relevantTests || analytics.selectedTests;
+               const activeSubjectId = graphStats?.filterSubjectId;
+               
+               if (activeSubjectId) {
+                 const subjectTopics = topics.filter((t: any) => t.subjectId === activeSubjectId).map((t: any) => t.id);
+                 activeTests = activeTests.filter((t: any) => {
+                    if (t.subjectId === activeSubjectId) return true;
+                    return questions.some((q: any) => q.testId === t.id && (q.subjectId === activeSubjectId || q.topicIds?.some((tid: number) => subjectTopics.includes(tid))));
+                 });
+               }
+               
+               if (distMode === 'topics' && activeSubjectId) {
+                  const subjectTopics = topics.filter((t: any) => t.subjectId === activeSubjectId);
+                  const activeTestIds = new Set(activeTests.map((t: any) => t.id));
+                  const statusMap = new Map(statuses.map((s: any) => [s.id!, s.name.toLowerCase()]));
+                  const activeQs = questions.filter((q: any) => activeTestIds.has(q.testId) && q.topicIds?.some((tid: number) => subjectTopics.find((t: any) => t.id === tid)));
+                  
+                  const topicStats = subjectTopics.map((topic: any) => {
+                    const qs = activeQs.filter((q: any) => q.topicIds?.includes(topic.id!));
+                    let correct = 0, attempted = 0;
+                    qs.forEach((q: any) => {
+                      const names = q.statusIds?.map((id: number) => statusMap.get(id) || '') || [];
+                      if (!names.includes('left out')) {
+                        attempted++;
+                        if (!names.includes('incorrect')) correct++;
+                      }
+                    });
+                    return { ...topic, attempted, correct, accuracy: attempted > 0 ? (correct/attempted)*100 : 0 };
+                  }).filter((t: any) => t.attempted > 0).sort((a: any, b: any) => b.accuracy - a.accuracy);
+                  
+                  if (!topicStats.length) return <EmptyState title="No topic data" message="No questions attempted for this subject in the selected period." />;
+                  
+                  return <div className="mt-2 space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
+                    {topicStats.map((topic: any) => (
+                      <div key={topic.id}>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="font-bold text-surface-200">{topic.name}</span>
+                          <span className="text-surface-400">{round(topic.accuracy)}% acc</span>
+                        </div>
+                        <ProgressBar value={topic.accuracy} color={topic.accuracy < 40 ? 'bg-rose-500' : topic.accuracy < 70 ? 'bg-yellow-500' : 'bg-emerald-500'} />
+                      </div>
+                    ))}
+                  </div>;
+               }
+               
+               const filteredByType = testTypes.map((type: any) => ({
+                 ...type,
+                 tests: activeTests.filter((t: any) => t.testTypeId === type.id)
+               })).filter((g: any) => g.tests.length > 0).sort((a: any, b: any) => b.tests.length - a.tests.length);
+               
+               if (!filteredByType.length) return <EmptyState title="No test categories" message="No tests found for this selection." />;
+               
+               return <div className="mt-2 space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
+                 {filteredByType.map((group: any) => (
+                   <div key={group.id}>
+                     <div className="flex justify-between text-sm mb-2">
+                       <span className="font-bold text-surface-200">{group.name}</span>
+                       <span className="text-surface-400">{group.tests.length} test{group.tests.length !== 1 ? 's' : ''}</span>
+                     </div>
+                     <ProgressBar value={percent(group.tests.length, activeTests.length)} color="bg-gradient-to-r from-primary-500 to-sky-400" />
+                   </div>
+                 ))}
+               </div>;
+            })()}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. TEST CATEGORY ANALYSIS */}
+      {analytics.byType.length > 0 && (
+        <section id="test-category" className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 scroll-mt-24">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-surface-500">Deep Dive</p>
+              <h2 className="mt-1 text-xl font-black text-white">Test Category Analysis</h2>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar items-center">
+              <button onClick={() => setShowDateFilter(true)} className="px-4 py-2 text-sm font-bold rounded-xl transition-all border border-white/10 text-white hover:bg-surface-700/80 hover:border-white/20 flex items-center gap-2 shrink-0">
+                <Calendar className="w-4 h-4 text-primary-400" /> {dateFilter.label}
+              </button>
+              <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
+              {analytics.byType.map(type => (
+                <button 
+                  key={type.id} 
+                  onClick={() => setActiveCategory(type.id)}
+                  className={cn("px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors border shrink-0", (activeCategory || analytics.byType[0]?.id) === type.id ? "bg-primary-500/20 text-primary-300 border-primary-500/30" : "bg-surface-800/50 text-surface-400 border-white/5 hover:text-white hover:bg-surface-700/50")}
+                >
+                  {type.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          {(() => {
+            const category = analytics.byType.find(t => t.id === (activeCategory || analytics.byType[0]?.id));
+            if (!category) return null;
+            const catQuestions = analytics.questionMetrics.filter(q => category.tests.some(t => t.id === q.question.testId));
+            const stat = analytics.getBreakdown(catQuestions, category.tests, true);
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <StatCard label="Total Tests" value={String(category.tests.length)} icon={Layers3} color="sky" hint={<span />} />
+                <StatCard label="Questions Solved" value={String(stat.attempted)} icon={Brain} color="emerald" hint={<span>{stat.skipped} left out</span>} />
+                <StatCard label="Accuracy" value={`${round(stat.accuracy)}%`} icon={Target} color="indigo" hint={<span />} />
+                <StatCard label="Avg. Time" value={formatPerQuestion(stat.averageTime)} icon={Clock3} color="rose" hint={<span />} />
+                <StatCard label="Incorrect" value={String(stat.incorrect)} icon={AlertTriangle} color="amber" hint={<span />} />
+              </div>
+            );
+          })()}
+        </section>
+      )}
+
+      {/* 5. PER-TEST ANALYSIS */}
       <section id="per-test" className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 scroll-mt-24">
         <div className="flex flex-wrap justify-between gap-4">
           <div>
@@ -1335,136 +1582,8 @@ export const Performance: React.FC = () => {
         })()}
       </section>
 
-      <section id="deep-dive" className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6 mb-6 scroll-mt-24">
-        <ImprovementGraph tests={tests} questions={questions} statuses={statuses} coachings={coachings} testTypes={testTypes} subjects={subjects} topics={topics} onDataChange={setGraphStats} />
-        <div className="flex flex-col gap-6">
-          <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 flex-1"><p className="text-xs font-bold uppercase tracking-widest text-surface-500">Answer pattern</p><h2 className="mt-1 text-xl font-black text-white">Per-question analysis</h2><div className="mt-6 flex items-center gap-6"><div className="w-32 h-32 rounded-full shrink-0" style={{ background: `conic-gradient(#10b981 0 ${percent((graphStats || overall).correct, (graphStats || overall).total)}%, #f43f5e ${percent((graphStats || overall).correct, (graphStats || overall).total)}% ${percent((graphStats || overall).correct + (graphStats || overall).incorrect, (graphStats || overall).total)}%, #64748b ${percent((graphStats || overall).correct + (graphStats || overall).incorrect, (graphStats || overall).total)}% 100%)` }}><div className="m-[13px] h-[102px] rounded-full bg-surface-900 flex flex-col items-center justify-center"><span className="text-2xl font-black text-white">{round((graphStats || overall).accuracy)}%</span><span className="text-[10px] uppercase text-surface-500 font-bold">accuracy</span></div></div><div className="flex-1 space-y-3 text-sm">{[{label:'Correct',value:(graphStats || overall).correct,color:'bg-emerald-400'}, {label:'Incorrect',value:(graphStats || overall).incorrect,color:'bg-rose-400'}, {label:'Left out',value:(graphStats || overall).skipped,color:'bg-slate-500'}].map(item => <div key={item.label}><div className="flex justify-between text-surface-400 mb-1"><span>{item.label}</span><span className="text-white font-bold">{round(percent(item.value, (graphStats || overall).total))}%</span></div><ProgressBar value={percent(item.value, (graphStats || overall).total)} color={item.color} /></div>)}</div></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white/[0.03] p-3"><p className="text-xs text-surface-500">Unattempted</p><p className="mt-1 font-black text-white">{(graphStats || overall).skipped}</p></div><div className="rounded-xl bg-white/[0.03] p-3"><p className="text-xs text-surface-500">Avg. time</p><p className="mt-1 font-black text-white">{formatPerQuestion((graphStats || overall).averageTime)}</p></div></div></div>
-          <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 flex-1 flex flex-col">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-surface-500">Test distribution</p>
-                <h2 className="mt-1 text-xl font-black text-white">Attempts by category</h2>
-              </div>
-              {graphStats?.filterSubjectId && (
-                <div className="flex bg-surface-900/80 p-1 rounded-xl border border-white/10">
-                  <button onClick={() => setDistMode('types')} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold transition-all", distMode === 'types' ? "bg-white/10 text-white" : "text-surface-400 hover:text-white hover:bg-white/5")}>Types</button>
-                  <button onClick={() => setDistMode('topics')} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold transition-all", distMode === 'topics' ? "bg-white/10 text-white" : "text-surface-400 hover:text-white hover:bg-white/5")}>Topics</button>
-                </div>
-              )}
-            </div>
-            
-            {(() => {
-               let activeTests = graphStats?.relevantTests || analytics.selectedTests;
-               const activeSubjectId = graphStats?.filterSubjectId;
-               
-               if (activeSubjectId) {
-                 const subjectTopics = topics.filter((t: any) => t.subjectId === activeSubjectId).map((t: any) => t.id);
-                 activeTests = activeTests.filter((t: any) => {
-                    if (t.subjectId === activeSubjectId) return true;
-                    return questions.some((q: any) => q.testId === t.id && (q.subjectId === activeSubjectId || q.topicIds?.some((tid: number) => subjectTopics.includes(tid))));
-                 });
-               }
-               
-               if (distMode === 'topics' && activeSubjectId) {
-                  const subjectTopics = topics.filter((t: any) => t.subjectId === activeSubjectId);
-                  const activeTestIds = new Set(activeTests.map((t: any) => t.id));
-                  const statusMap = new Map(statuses.map((s: any) => [s.id!, s.name.toLowerCase()]));
-                  const activeQs = questions.filter((q: any) => activeTestIds.has(q.testId) && q.topicIds?.some((tid: number) => subjectTopics.find((t: any) => t.id === tid)));
-                  
-                  const topicStats = subjectTopics.map((topic: any) => {
-                    const qs = activeQs.filter((q: any) => q.topicIds?.includes(topic.id!));
-                    let correct = 0, attempted = 0;
-                    qs.forEach((q: any) => {
-                      const names = q.statusIds?.map((id: number) => statusMap.get(id) || '') || [];
-                      if (!names.includes('left out')) {
-                        attempted++;
-                        if (!names.includes('incorrect')) correct++;
-                      }
-                    });
-                    return { ...topic, attempted, correct, accuracy: attempted > 0 ? (correct/attempted)*100 : 0 };
-                  }).filter((t: any) => t.attempted > 0).sort((a: any, b: any) => b.accuracy - a.accuracy);
-                  
-                  if (!topicStats.length) return <EmptyState title="No topic data" message="No questions attempted for this subject in the selected period." />;
-                  
-                  return <div className="mt-2 space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
-                    {topicStats.map((topic: any) => (
-                      <div key={topic.id}>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="font-bold text-surface-200">{topic.name}</span>
-                          <span className="text-surface-400">{round(topic.accuracy)}% acc</span>
-                        </div>
-                        <ProgressBar value={topic.accuracy} color={topic.accuracy < 40 ? 'bg-rose-500' : topic.accuracy < 70 ? 'bg-yellow-500' : 'bg-emerald-500'} />
-                      </div>
-                    ))}
-                  </div>;
-               }
-               
-               const filteredByType = testTypes.map((type: any) => ({
-                 ...type,
-                 tests: activeTests.filter((t: any) => t.testTypeId === type.id)
-               })).filter((g: any) => g.tests.length > 0).sort((a: any, b: any) => b.tests.length - a.tests.length);
-               
-               if (!filteredByType.length) return <EmptyState title="No test categories" message="No tests found for this selection." />;
-               
-               return <div className="mt-2 space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
-                 {filteredByType.map((group: any) => (
-                   <div key={group.id}>
-                     <div className="flex justify-between text-sm mb-2">
-                       <span className="font-bold text-surface-200">{group.name}</span>
-                       <span className="text-surface-400">{group.tests.length} test{group.tests.length !== 1 ? 's' : ''}</span>
-                     </div>
-                     <ProgressBar value={percent(group.tests.length, activeTests.length)} color="bg-gradient-to-r from-primary-500 to-sky-400" />
-                   </div>
-                 ))}
-               </div>;
-            })()}
-          </div>
-        </div>
-      </section>
-
-      {analytics.byType.length > 0 && (
-        <section id="test-category" className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 scroll-mt-24">
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-surface-500">Deep Dive</p>
-              <h2 className="mt-1 text-xl font-black text-white">Test Category Analysis</h2>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar items-center">
-              <button onClick={() => setShowDateFilter(true)} className="px-4 py-2 text-sm font-bold rounded-xl transition-all border border-white/10 text-white hover:bg-surface-700/80 hover:border-white/20 flex items-center gap-2 shrink-0">
-                <Calendar className="w-4 h-4 text-primary-400" /> {dateFilter.label}
-              </button>
-              <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
-              {analytics.byType.map(type => (
-                <button 
-                  key={type.id} 
-                  onClick={() => setActiveCategory(type.id)}
-                  className={cn("px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors border shrink-0", (activeCategory || analytics.byType[0]?.id) === type.id ? "bg-primary-500/20 text-primary-300 border-primary-500/30" : "bg-surface-800/50 text-surface-400 border-white/5 hover:text-white hover:bg-surface-700/50")}
-                >
-                  {type.name}
-                </button>
-              ))}
-            </div>
-          </div>
-          {(() => {
-            const category = analytics.byType.find(t => t.id === (activeCategory || analytics.byType[0]?.id));
-            if (!category) return null;
-            const catQuestions = analytics.questionMetrics.filter(q => category.tests.some(t => t.id === q.question.testId));
-            const stat = analytics.getBreakdown(catQuestions, category.tests, true);
-            return (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <StatCard label="Total Tests" value={String(category.tests.length)} icon={Layers3} color="sky" hint={<span />} />
-                <StatCard label="Questions Solved" value={String(stat.attempted)} icon={Brain} color="emerald" hint={<span>{stat.skipped} left out</span>} />
-                <StatCard label="Accuracy" value={`${round(stat.accuracy)}%`} icon={Target} color="indigo" hint={<span />} />
-                <StatCard label="Avg. Time" value={formatPerQuestion(stat.averageTime)} icon={Clock3} color="rose" hint={<span />} />
-                <StatCard label="Incorrect" value={String(stat.incorrect)} icon={AlertTriangle} color="amber" hint={<span />} />
-              </div>
-            );
-          })()}
-        </section>
-      )}
-
-      {/* NEW SUBJECT & TOPIC ANALYSIS */}
-      <section className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8">
+      {/* 6. SUBJECT & TOPIC ANALYSIS */}
+      <section id="subject-focus" className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 scroll-mt-24">
         <div className="flex flex-col xl:flex-row justify-between gap-4 mb-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-surface-500">Subject Level Focus</p>
@@ -1706,11 +1825,7 @@ export const Performance: React.FC = () => {
         })()}
       </section>
 
-      <section id="strength-detector" className="grid grid-cols-1 lg:grid-cols-2 gap-6 scroll-mt-24">
-        <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8"><div className="flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-400" /><div><p className="text-xs font-bold uppercase tracking-widest text-surface-500">Strength detector</p><h2 className="mt-1 text-xl font-black text-white">Use your advantages</h2></div></div><div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[{icon: Target, label: 'Highest accuracy topic', value: analytics.highestAccuracyTopic?.name || '—', note: analytics.highestAccuracyTopic ? `${round(analytics.highestAccuracyTopic.accuracy)}% accuracy` : 'More attempts needed'}, {icon: Award,label:'Best subject',value:analytics.bestSubject?.name || '—',note:analytics.bestSubject ? `${round(analytics.bestSubject.accuracy)}% accuracy` : 'More attempts needed'}, {icon: Zap,label:'Fastest subject',value:analytics.fastestSubject?.name || '—',note:analytics.fastestSubject ? formatPerQuestion(analytics.fastestSubject.averageTime) : 'Timed data needed'}, {icon: ShieldCheck,label:'Least negative',value:analytics.leastNegative?.name || '—',note:analytics.leastNegative ? `${round(percent(analytics.leastNegative.incorrect, analytics.leastNegative.attempted))}% incorrect` : 'More attempts needed'}, {icon: Activity,label:'Most consistent',value: analytics.consistency ? `${analytics.consistency}% rhythm` : '—',note:'Your weekly accuracy stability'}].map(item => <div key={item.label} className="p-4 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/10 flex flex-col justify-between min-h-[110px]"><item.icon className="w-4 h-4 text-emerald-400 shrink-0" /><p className="mt-3 text-[10px] sm:text-xs uppercase tracking-wider text-surface-500 font-bold leading-tight">{item.label}</p><p className="mt-1 font-black text-surface-100 truncate text-sm sm:text-base">{item.value}</p><p className="mt-1 text-[10px] text-emerald-300 truncate">{item.note}</p></div>)}</div></div>
-        <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8"><div className="flex items-center gap-2"><Flame className="w-5 h-5 text-rose-400" /><div><p className="text-xs font-bold uppercase tracking-widest text-surface-500">Weakness radar</p><h2 className="mt-1 text-xl font-black text-white">Protect your score</h2></div></div><div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[ { title: "Draining topics", icon: AlertTriangle, iconColor: "text-rose-400", bgColor: "bg-rose-500/[0.04]", borderColor: "border-rose-500/10", noteColor: "text-rose-300", items: analytics.weakTopics.map(t => ({ name: t.name, detail: `${t.incorrect} mistakes` })) }, { title: "Time sinks (>3m)", icon: Clock3, iconColor: "text-amber-400", bgColor: "bg-amber-500/[0.04]", borderColor: "border-amber-500/10", noteColor: "text-amber-300", items: analytics.slowChapters.map(s => ({ name: s.name, detail: formatPerQuestion(s.averageTime) })) }, { title: "Memory decay (21d+)", icon: Archive, iconColor: "text-surface-400", bgColor: "bg-white/[0.04]", borderColor: "border-white/10", noteColor: "text-surface-300", items: analytics.forgotten.map(t => ({ name: t.name, detail: "Needs revision" })) }, { title: "Blind spots", icon: EyeOff, iconColor: "text-indigo-400", bgColor: "bg-indigo-500/[0.04]", borderColor: "border-indigo-500/10", noteColor: "text-indigo-300", items: analytics.neverPracticed.map(t => ({ name: t.name, detail: "Unattempted" })) }, { title: "Worst subject", icon: TrendingDown, iconColor: "text-rose-400", bgColor: "bg-rose-500/[0.04]", borderColor: "border-rose-500/10", noteColor: "text-rose-300", items: analytics.worstSubject ? [{ name: analytics.worstSubject.name, detail: `${round(analytics.worstSubject.accuracy)}% accuracy` }] : [] }, { title: "Least accurate topic", icon: Target, iconColor: "text-orange-400", bgColor: "bg-orange-500/[0.04]", borderColor: "border-orange-500/10", noteColor: "text-orange-300", items: analytics.leastAccurateTopic ? [{ name: analytics.leastAccurateTopic.name, detail: `${round(analytics.leastAccurateTopic.accuracy)}% accuracy` }] : [] } ].map(section => <div key={section.title} className={cn("p-4 rounded-xl border flex flex-col min-h-[140px]", section.bgColor, section.borderColor)}><div className="flex items-center gap-2 mb-4"><section.icon className={cn("w-4 h-4 shrink-0", section.iconColor)} /><p className="text-[10px] sm:text-xs uppercase tracking-wider text-surface-500 font-bold leading-tight">{section.title}</p></div>{section.items.length ? <div className="space-y-2.5 flex-1">{section.items.slice(0, 4).map(item => <div key={item.name} className="flex justify-between items-center gap-3"><p className="font-black text-surface-100 truncate text-sm">{item.name}</p><p className={cn("text-[10px] shrink-0 font-bold uppercase", section.noteColor)}>{item.detail}</p></div>)}</div> : <div className="flex-1 flex items-center justify-center"><span className="text-xs text-surface-500 italic">None detected</span></div>}</div>)}</div></div>
-      </section>
-
+      {/* 7. SUBJECT LEADERBOARD */}
       <section id="subject-leaderboard" className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 mb-6 scroll-mt-24">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-5">
           <div>
@@ -1810,7 +1925,13 @@ export const Performance: React.FC = () => {
                   <tr key={subject.id} className="border-b border-white/[0.045] last:border-0 hover:bg-white/[0.02]">
                     <td className="py-3.5 px-2">
                       <div className="flex items-center gap-3">
-                        <span className={cn("text-xs font-black w-5 text-center", index === 0 ? "text-amber-400" : index === 1 ? "text-slate-300" : index === 2 ? "text-amber-600" : "text-surface-500")}>
+                        <span className={cn(
+                          "text-xs font-black w-6 h-6 rounded-lg flex items-center justify-center border shrink-0", 
+                          index === 0 ? "text-amber-300 bg-amber-400/15 border-amber-400/40 shadow-[0_0_10px_rgba(251,191,36,0.3)]" : 
+                          index === 1 ? "text-slate-200 bg-slate-300/15 border-slate-300/40 shadow-[0_0_10px_rgba(203,213,225,0.3)]" : 
+                          index === 2 ? "text-amber-500 bg-amber-600/15 border-amber-600/40 shadow-[0_0_10px_rgba(217,119,6,0.3)]" : 
+                          "text-surface-400 bg-white/5 border-white/10"
+                        )}>
                           #{index + 1}
                         </span>
                         <span className="font-bold text-white">{subject.name}</span>
@@ -1848,6 +1969,7 @@ export const Performance: React.FC = () => {
         )}
       </section>
 
+      {/* 8. TOPIC PRECISION ANALYSIS */}
       <section id="topic-precision" className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8 scroll-mt-24">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-5">
           <div>
@@ -1941,6 +2063,7 @@ export const Performance: React.FC = () => {
         )}
       </section>
 
+      {/* 9. TAG & TIME ANALYSIS */}
       <section id="tag-analysis" className="grid grid-cols-1 xl:grid-cols-[1fr_1.15fr] gap-6 scroll-mt-24">
         <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8"><div className="flex items-center gap-2"><Clock3 className="w-5 h-5 text-sky-300" /><div><p className="text-xs font-bold uppercase tracking-widest text-surface-500">3-hour tests only</p><h2 className="mt-1 text-xl font-black text-white">Time per test progress</h2></div></div>{analytics.timeTests.length ? <div className="mt-6 space-y-4">{analytics.timeTests.map(({ test, time, perQuestion }) => <div key={test.id}><div className="flex justify-between gap-3 text-sm"><span className="font-bold text-surface-200 truncate">{analytics.typeMap.get(test.testTypeId) || 'Test'} · {safeDate(test.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span><span className="text-sky-300 font-bold shrink-0">{formatPerQuestion(perQuestion)}</span></div><div className="mt-2 flex gap-3 items-center"><ProgressBar value={percent(time, 180)} color="bg-gradient-to-r from-sky-500 to-cyan-300" className="flex-1" /><span className="text-xs text-surface-500 w-12 text-right">{formatTime(time)}</span></div></div>)}</div> : <div className="mt-5"><EmptyState title="No 3-hour tests found" message="This chart activates for tests with a recorded duration of at least 2h 50m." /></div>}</div>
         <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/8"><div className="flex items-center gap-2"><Tags className="w-5 h-5 text-violet-300" /><div><p className="text-xs font-bold uppercase tracking-widest text-surface-500">Tag analysis</p><h2 className="mt-1 text-xl font-black text-white">Patterns behind your mistakes</h2></div></div>{analytics.tagAnalysis.length ? <div className="mt-5 space-y-2">{analytics.tagAnalysis.map(tag => <div key={tag.id} className="rounded-xl border border-white/7 overflow-hidden"><button onClick={() => setExpandedTag(expandedTag === tag.id ? null : tag.id)} className="w-full flex items-center justify-between gap-3 p-3.5 text-left hover:bg-white/[0.035] transition-colors"><div className="flex items-center gap-3 min-w-0"><span className="w-3 h-3 rounded-full shrink-0" style={{backgroundColor: tag.color}} /><div className="min-w-0"><p className="font-bold text-surface-100 truncate">{tag.name}</p><p className="text-xs text-surface-500 truncate">{tag.tagged.length} question{tag.tagged.length !== 1 ? 's' : ''} · {tag.errors} incorrect</p></div></div>{expandedTag === tag.id ? <ChevronUp className="w-4 h-4 text-surface-400" /> : <ChevronDown className="w-4 h-4 text-surface-400" />}</button>              <AnimatePresence>
@@ -1989,7 +2112,7 @@ export const Performance: React.FC = () => {
     </div>
   </section>
 
-              <AnimatePresence>
+  <AnimatePresence>
         {viewingQuestions && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             <EscapeHandler onEscape={() => setViewingQuestions(null)} />
@@ -2064,8 +2187,6 @@ export const Performance: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
-
-      <MeVsMeComparison tests={tests} questions={questions} subjects={subjects} topics={topics} testTypes={testTypes} statuses={statuses} />
 
     </>}
   </div>;

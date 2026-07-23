@@ -60,19 +60,31 @@ export const PracticeTest: React.FC = () => {
   const currentQuestion = questions[activeIndex];
   const totalQuestions = session.responses.length;
 
-  const saveCurrentResponseToDB = async (overrideStatus?: 'answered' | 'review' | 'pending') => {
+  const saveCurrentResponseToDB = async (overrideStatus?: string) => {
     if (!localResponse) return;
     const newResponses = [...session.responses];
-    let status = overrideStatus || localResponse.status;
     
-    if (!overrideStatus) {
-      const hasAnswer = (localResponse.selectedOptions && localResponse.selectedOptions.length > 0) || 
-                        (localResponse.numericalAnswer !== undefined && localResponse.numericalAnswer !== null && localResponse.numericalAnswer.toString() !== '');
-      status = hasAnswer ? 'answered' : 'not_answered';
-    } else if (overrideStatus === 'review') {
-      const hasAnswer = (localResponse.selectedOptions && localResponse.selectedOptions.length > 0) || 
-                        (localResponse.numericalAnswer !== undefined && localResponse.numericalAnswer !== null && localResponse.numericalAnswer.toString() !== '');
-      status = hasAnswer ? 'answered_review' : 'review';
+    const hasAnswer = (localResponse.selectedOptions && localResponse.selectedOptions.length > 0) || 
+                      (localResponse.numericalAnswer !== undefined && localResponse.numericalAnswer !== null && localResponse.numericalAnswer.toString() !== '');
+
+    let status = overrideStatus || localResponse.status;
+
+    if (overrideStatus === 'review') {
+      // User explicitly clicked "Mark for Review" button -> Toggle review mode
+      const isCurrentlyReview = localResponse.status === 'review' || localResponse.status === 'answered_review';
+      if (isCurrentlyReview) {
+        status = hasAnswer ? 'answered' : 'not_answered';
+      } else {
+        status = hasAnswer ? 'answered_review' : 'review';
+      }
+    } else if (!overrideStatus) {
+      // Standard navigation (Save & Next, Previous, Palette navigation)
+      const isMarkedForReview = localResponse.status === 'review' || localResponse.status === 'answered_review';
+      if (isMarkedForReview) {
+        status = hasAnswer ? 'answered_review' : 'review';
+      } else {
+        status = hasAnswer ? 'answered' : 'not_answered';
+      }
     }
 
     // Auto grading
@@ -211,8 +223,18 @@ export const PracticeTest: React.FC = () => {
           <QuestionView 
             question={currentQuestion}
             response={localResponse}
-            onResponseChange={(val) => setLocalResponse({ ...localResponse, selectedOptions: val })}
-            onNumericalChange={(val) => setLocalResponse({ ...localResponse, numericalAnswer: val })}
+            onResponseChange={(val) => {
+              const hasAns = val.length > 0;
+              const isReview = localResponse?.status === 'review' || localResponse?.status === 'answered_review';
+              const newStatus = isReview ? (hasAns ? 'answered_review' : 'review') : (hasAns ? 'answered' : 'not_answered');
+              setLocalResponse({ ...localResponse, selectedOptions: val, status: newStatus });
+            }}
+            onNumericalChange={(val) => {
+              const hasAns = val !== undefined && val !== null && val.toString() !== '';
+              const isReview = localResponse?.status === 'review' || localResponse?.status === 'answered_review';
+              const newStatus = isReview ? (hasAns ? 'answered_review' : 'review') : (hasAns ? 'answered' : 'not_answered');
+              setLocalResponse({ ...localResponse, numericalAnswer: val, status: newStatus });
+            }}
             questionNumber={activeIndex + 1}
           />
           <ActionFooter 

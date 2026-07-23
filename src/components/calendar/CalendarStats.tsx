@@ -87,28 +87,31 @@ export const CalendarStats: React.FC<CalendarStatsProps> = ({ tests, currentMont
   };
 
   const statCards = [
-    { label: "Total Tests", value: stats.totalTests, icon: Target, color: "text-blue-400", bg: "bg-blue-500/10" },
-    { label: "Average Score", value: `${stats.avgScore}%`, icon: Activity, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-    { label: "Longest Streak", value: `${stats.maxStreak} Days`, icon: Flame, color: "text-orange-400", bg: "bg-orange-500/10" },
-    { label: "Active Days", value: stats.activeDays, icon: CalendarIcon, color: "text-purple-400", bg: "bg-purple-500/10" },
-    { label: "Total Time", value: formatTime(stats.totalMinutes), icon: Clock, color: "text-pink-400", bg: "bg-pink-500/10" }
+    { label: "Total Tests", value: stats.totalTests, icon: Target, color: "text-blue-400 border-blue-500/30 bg-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.2)]" },
+    { label: "Average Score", value: `${stats.avgScore}%`, icon: Activity, color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/15 shadow-[0_0_15px_rgba(16,185,129,0.2)]" },
+    { label: "Longest Streak", value: `${stats.maxStreak} Days`, icon: Flame, color: "text-amber-400 border-amber-500/30 bg-amber-500/15 shadow-[0_0_15px_rgba(245,158,11,0.2)]" },
+    { label: "Active Days", value: stats.activeDays, icon: CalendarIcon, color: "text-purple-400 border-purple-500/30 bg-purple-500/15 shadow-[0_0_15px_rgba(168,85,247,0.2)]" },
+    { label: "Total Time", value: formatTime(stats.totalMinutes), icon: Clock, color: "text-pink-400 border-pink-500/30 bg-pink-500/15 shadow-[0_0_15px_rgba(236,72,153,0.2)]" }
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 w-full">
       {statCards.map((stat, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="glass-card p-4 rounded-2xl flex flex-col items-center text-center justify-center space-y-2 border border-white/5"
+          transition={{ delay: i * 0.08 }}
+          className="relative overflow-hidden bg-gradient-to-br from-surface-900/90 via-surface-900/60 to-surface-950/90 backdrop-blur-xl p-4 sm:p-5 rounded-2xl flex flex-col items-start justify-between space-y-3 border border-white/10 transition-all duration-300 hover:border-white/20 hover:shadow-xl hover:-translate-y-0.5 group"
         >
-          <div className={cn("p-2 rounded-xl", stat.bg, stat.color)}>
-            <stat.icon className="w-5 h-5" />
+          <div className="pointer-events-none absolute -top-10 -right-10 w-20 h-20 bg-white/[0.03] rounded-full blur-xl group-hover:bg-white/[0.06] transition-colors" />
+          <div className="flex items-center justify-between w-full relative z-10">
+            <span className="text-[11px] font-black uppercase tracking-widest text-surface-400 group-hover:text-surface-300 transition-colors truncate">{stat.label}</span>
+            <div className={cn("p-2 rounded-xl border shrink-0 transition-transform duration-300 group-hover:scale-110", stat.color)}>
+              <stat.icon className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-white">{stat.value}</div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-surface-400">{stat.label}</div>
+          <div className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm relative z-10">{stat.value}</div>
         </motion.div>
       ))}
     </div>
